@@ -83,7 +83,7 @@ export const login = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-
+    //clear the jwt cookie by overwriting it with an empty value and expiring it immediately (maxAge: 0).
     try {
         res.cookie("jwt", "", {
             maxAge: 0,
