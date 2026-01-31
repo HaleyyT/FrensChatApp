@@ -177,26 +177,26 @@ Response: {"message":"Logged out successfully"}
 
 - Input validation hardening (stronger schema-level validation)
 
-– Auth middleware + protected routes (/me)
+- Auth middleware + protected routes (/me)
 
 
 ### 🧭 Planned (next milestones)
 
-– Conversations + Messages models
+- Conversations + Messages models
 
-– Socket.io real-time messaging
+- Socket.io real-time messaging
 
-– Online presence + typing indicators
+- Online presence + typing indicators
 
-– Pagination for chat history
+- Pagination for chat history
 
-– Tests (integration tests for auth + message endpoints)
+- Tests (integration tests for auth + message endpoints)
 
-– Deployment
+- Deployment
 
 
 ### Notes (Security + dev environment)
 
-– In development (localhost), cookies may show Secure=false depending on config.
+- In development (localhost), cookies may show Secure=false depending on config.
 
-– In production, Secure should be enabled so cookies are only sent over HTTPS.
+- In production, Secure should be enabled so cookies are only sent over HTTPS.
