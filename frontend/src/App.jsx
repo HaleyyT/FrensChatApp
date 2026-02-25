@@ -21,7 +21,7 @@ function App() {
     const res = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include", // IMPORTANT: allow browser to store jwt cookie
+      credentials: "include",
       body: JSON.stringify({ username, password }),
     });
 
@@ -39,7 +39,7 @@ function App() {
 
     try {
       const res = await fetch("/api/user", {
-        credentials: "include", // IMPORTANT: send jwt cookie
+        credentials: "include",
       });
 
       if (!res.ok) {
@@ -57,8 +57,6 @@ function App() {
   };
 
   useEffect(() => {
-    // On page load, try fetching users.
-    // If not logged in yet, you'll see 401. Click "Login" then "Load Users".
     loadUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -90,21 +88,36 @@ function App() {
 
         <hr style={{ margin: "16px 0" }} />
 
+        {/* Tailwind test */}
+        <h1 className="text-4xl font-bold text-blue-500">Tailwind works</h1>
+
         <h2>Auth</h2>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={handleLoginAndLoad}>Login + Load Users</button>
-          <button onClick={loadUsers}>Load Users</button>
+        <div className="flex gap-2 flex-wrap justify-center mt-2">
+          <button
+            onClick={handleLoginAndLoad}
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Login + Load Users
+          </button>
+
+          <button
+            onClick={loadUsers}
+            className="px-4 py-2 rounded-lg border border-gray-400 hover:bg-gray-100"
+          >
+            Load Users
+          </button>
         </div>
-        {authMsg && <p style={{ marginTop: 8 }}>{authMsg}</p>}
+
+        {authMsg && <p className="mt-2">{authMsg}</p>}
 
         <hr style={{ margin: "16px 0" }} />
 
         <h2>Users</h2>
         {loadingUsers && <p>Loading users…</p>}
-        {usersError && <p style={{ color: "crimson" }}>{usersError}</p>}
+        {usersError && <p className="text-red-500">{usersError}</p>}
 
         {!loadingUsers && !usersError && users.length > 0 && (
-          <ul style={{ textAlign: "left" }}>
+          <ul className="text-left mt-2 space-y-1">
             {users.map((u) => (
               <li key={u._id}>
                 {u.fullName} (@{u.username})
