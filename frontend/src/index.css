@@ -1,14 +1,71 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Cormorant+Garamond:wght@600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-    /*background: linear-gradient(30deg, #0b0e39, #534aff, #f5ffe5);*/
-    background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)),
-                url("/mountain3-bg.webp");
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
+:root {
+  color-scheme: dark;
+  font-family: "Manrope", sans-serif;
+}
 
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  color: #e2e8f0;
+  background:
+    linear-gradient(120deg, rgba(2, 6, 23, 0.78), rgba(8, 15, 32, 0.42)),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.24), rgba(2, 6, 23, 0.82)),
+    url("/mountain3-bg.webp");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at top left, rgba(0, 229, 255, 0.14), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.07), transparent 24%);
+}
+
+button,
+textarea,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+textarea,
+input {
+  appearance: none;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.font-serif {
+  font-family: "Cormorant Garamond", serif;
+}
+
+::selection {
+  background: rgba(0, 229, 255, 0.28);
+  color: #f8fafc;
 }

@@ -1,19 +1,40 @@
-import { useEffect, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { useState } from "react";
 import "./App.css";
+import Home from "./pages/home/home";
+import Login from "./pages/login/login";
 
-      {/* <button className="btn btn-outline">Default</button>
-      <button className="btn btn-outline btn-primary">Primary</button>
-      <button className="btn btn-outline btn-secondary">Secondary</button>
-      <button className="btn btn-outline btn-accent">Accent</button>
-      <button className="btn btn-ghost">Ghost</button>
-      <button className="btn btn-link text">Link</button> */}
+const views = [
+  { id: "workspace", label: "Workspace" },
+  { id: "login", label: "Login" },
+];
 
 function App() {
-  return <div className='p-4 h-screen flex items-center justify-center'>
-    <login />
-    </div>;
+  const [activeView, setActiveView] = useState("workspace");
+
+  return (
+    <main className="app-shell">
+      <div className="pointer-events-none fixed inset-x-0 top-5 z-20 flex justify-center px-4">
+        <div className="pointer-events-auto inline-flex rounded-full border border-white/12 bg-slate-950/55 p-1.5 shadow-[0_18px_40px_rgba(2,6,23,0.35)] backdrop-blur-xl">
+          {views.map((view) => (
+            <button
+              key={view.id}
+              type="button"
+              onClick={() => setActiveView(view.id)}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition duration-300 ease-in-out sm:px-4 ${
+                activeView === view.id
+                  ? "bg-cyan-300 text-slate-950 shadow-[0_0_30px_rgba(0,229,255,0.28)]"
+                  : "text-slate-200 hover:bg-white/8 hover:text-white"
+              }`}
+            >
+              {view.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {activeView === "workspace" ? <Home /> : <Login />}
+    </main>
+  );
 }
 
 export default App;
