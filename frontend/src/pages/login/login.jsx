@@ -23,20 +23,20 @@ function Login() {
 
             <div className="max-w-md rounded-[24px] border border-white/12 bg-slate-950/36 p-5 backdrop-blur-xl">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-100/80">
-                Why it works
+                Experience highlights
               </p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                <div>
-                  <p className="text-xl font-bold text-white">20px</p>
-                  <p className="mt-1 text-sm font-medium text-slate-300">Glass blur depth</p>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-[18px] border border-white/10 bg-white/5 p-3.5">
+                  <p className="text-sm font-semibold text-white">Focused workspace</p>
+                  <p className="mt-1 text-sm font-medium leading-6 text-slate-300">
+                    Cleaner structure and calmer spacing keep conversations easy to scan.
+                  </p>
                 </div>
-                <div>
-                  <p className="text-xl font-bold text-white">#00E5FF</p>
-                  <p className="mt-1 text-sm font-medium text-slate-300">Primary accent</p>
-                </div>
-                <div>
-                  <p className="text-xl font-bold text-white">100%</p>
-                  <p className="mt-1 text-sm font-medium text-slate-300">Responsive framing</p>
+                <div className="rounded-[18px] border border-white/10 bg-white/5 p-3.5">
+                  <p className="text-sm font-semibold text-white">Luxury dark styling</p>
+                  <p className="mt-1 text-sm font-medium leading-6 text-slate-300">
+                    Frosted glass surfaces and bright cyan accents give the UI a polished feel.
+                  </p>
                 </div>
               </div>
             </div>
