@@ -13,14 +13,14 @@ function App() {
 
   return (
     <main className="app-shell">
-      <div className="pointer-events-none fixed inset-x-0 top-4 z-20 flex justify-center px-4">
+      <div className="pointer-events-none fixed inset-x-0 top-5 z-20 flex justify-center px-4">
         <div className="pointer-events-auto inline-flex rounded-full border border-white/12 bg-slate-950/55 p-1.5 shadow-[0_18px_40px_rgba(2,6,23,0.35)] backdrop-blur-xl">
           {views.map((view) => (
             <button
               key={view.id}
               type="button"
               onClick={() => setActiveView(view.id)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition duration-300 ease-in-out sm:px-5 ${
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition duration-300 ease-in-out sm:px-4 ${
                 activeView === view.id
                   ? "bg-cyan-300 text-slate-950 shadow-[0_0_30px_rgba(0,229,255,0.28)]"
                   : "text-slate-200 hover:bg-white/8 hover:text-white"
