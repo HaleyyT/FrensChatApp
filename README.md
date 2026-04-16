@@ -1,101 +1,151 @@
 # Realtime Chat App (Full-stack) — In Progress
 
-A full-stack chat application focused on building **production-style authentication** and a clean, scalable backend foundation for real-time messaging.
+A full-stack chat application focused on building production-style authentication and a clean, scalable backend foundation for real-time messaging.
 
-- **Frontend:** React (Vite)
-- **Backend:** Node.js + Express
-- **Database:** MongoDB Atlas + Mongoose
+![Current workspace UI](docs/images/workspace-ui.png)
 
-> Current milestone: **Auth API working end-to-end** (signup/login/logout) with **hashed passwords** and **JWT stored in HttpOnly cookies**.
+## Current Milestone 
 
----
+Auth API is working end-to-end with:
 
-## Why this project (Engineering focus)
+- signup
+- login
+- logout
+- hashed passwords
+- JWT stored in `HttpOnly` cookies
 
-This project is built to practice real workplace skills:
-- Designing a modular Express backend (routes/controllers/models/utils)
-- Implementing authentication in a secure, realistic way (cookie-based JWT)
-- Using environment configuration for safe local vs production behavior
-- Testing APIs with reproducible command-line requests (curl)
+## Stack
 
----
+- Frontend: React (Vite), Tailwind CSS, daisyUI
+- Backend: Node.js, Express
+- Database: MongoDB Atlas, Mongoose
+- Auth: JWT, bcryptjs, cookie-based sessions
 
-## Tech Stack
+## Why This Project
 
-**Backend**
-- Node.js, Express
-- MongoDB Atlas, Mongoose
-- JWT (`jsonwebtoken`)
-- Password hashing (`bcryptjs`)
-- Environment config (`dotenv`)
+This project is built to practice real engineering skills:
 
-**Frontend**
-- React (Vite)
+- designing a modular Express backend
+- implementing authentication in a secure, realistic way
+- using environment configuration safely across development and production
+- testing APIs with reproducible command-line requests
+- building a polished frontend on top of a practical backend foundation
 
----
+## Important Backend Implementations
+
+- `backend/controllers/auth.controller.js`
+  Handles signup, login, and logout logic.
+- `backend/utils/generateToken.js`
+  Creates the JWT and stores it in an `HttpOnly` cookie.
+- `backend/middleWare/protectRoutes.js`
+  Protects private routes by validating the JWT and attaching the authenticated user to the request.
+- `backend/routes/auth.routes.js`
+  Defines auth endpoints.
+- `backend/routes/user.routes.js`
+  Includes protected user-fetching logic for the chat sidebar.
+- `backend/routes/message.routes.js`
+  Includes protected message sending.
+- `backend/controllers/message.controller.js`
+  Creates messages and links them to conversations.
+- `backend/models/user.models.js`
+  Stores user account data.
+- `backend/models/conversation.model.js`
+  Stores chat participants and conversation message references.
+- `backend/models/message.model.js`
+  Stores individual chat messages.
+- `backend/db/connectToMongoDB.js`
+  Centralised database connection logic.
 
 ## Implemented Features
 
-### ✅ Authentication (API)
-- **Signup**: creates a user in MongoDB (with validations)
-- **Login**: verifies credentials and authenticates user
-- **Logout**: clears authentication cookie immediately
+### Authentication
 
-### ✅ Security Measures (already implemented)
-- **Password hashing** with bcrypt (no plaintext storage)
-- **JWT stored in cookies** (not localStorage)
-- Cookie flags:
-  - `HttpOnly` (reduces XSS token theft risk)
-  - `SameSite=Strict` (helps against CSRF in many cases)
-  - `Secure` enabled automatically outside development (`NODE_ENV`)
+- Signup creates a user in MongoDB
+- Login verifies credentials and authenticates the user
+- Logout clears the authentication cookie immediately
 
-### ✅ Backend foundation
-- Modular structure: `routes/`, `controllers/`, `models/`, `db/`, `utils/`
-- MongoDB connection via env (`MONGODB_URI`)
-- JSON request parsing enabled (`express.json()`)
+### Security Measures
 
----
+- Password hashing with `bcryptjs`
+- JWT stored in cookies instead of `localStorage`
+- `HttpOnly` cookie flag to reduce token theft through XSS
+- `SameSite=Strict` cookie setting to help protect against CSRF in many cases
+- `Secure` cookie flag enabled automatically outside development
+
+### Backend Foundation
+
+- Modular backend structure with routes, controllers, models, utilities, and middleware
+- MongoDB connection through environment variables
+- JSON request parsing enabled with `express.json()`
+- Protected route middleware for authenticated requests
+- Message and conversation models started for chat functionality
+
+### Frontend Progress
+
+- Cinematic dark workspace UI
+- Matching luxury dark login screen
+- Laptop-sized layout polished for real browser use
 
 ## API Endpoints
 
 Base URL (local): `http://localhost:5000`
 
 | Method | Route | Description |
-|-------|-------|-------------|
-| POST | `/api/auth/signup` | Create account + set JWT cookie |
-| POST | `/api/auth/login` | Login + set JWT cookie |
-| POST | `/api/auth/logout` | Logout + clear JWT cookie |
+| --- | --- | --- |
+| POST | `/api/auth/signup` | Create account and set JWT cookie |
+| POST | `/api/auth/login` | Login and set JWT cookie |
+| POST | `/api/auth/logout` | Logout and clear JWT cookie |
+| GET | `/api/users/` | Get users for sidebar (protected) |
+| POST | `/api/message/send/:id` | Send message to a user by id (protected) |
 
----
+## Project Structure
 
-## Project Structure (example)
 ```text
-/
-  backend/
-    server.js
-    db/
-      connectToMongoDB.js
-    models/
-      user.models.js
-    routes/
-      auth.routes.js
-    controllers/
-      auth.controller.js
-    utils/
-      generateToken.js
-  frontend/
-    src/
+backend/
+  controllers/
+    auth.controller.js
+    message.controller.js
+    user.controller.js
+  db/
+    connectToMongoDB.js
+  middleWare/
+    protectRoutes.js
+  models/
+    conversation.model.js
+    message.model.js
+    user.models.js
+  routes/
+    auth.routes.js
+    message.routes.js
+    user.routes.js
+  utils/
+    generateToken.js
+  server.js
+
+frontend/
+  public/
+  src/
+    pages/
+      home/
+      login/
+      signup/
+    App.jsx
+    index.css
+    main.jsx
 ```
 
 ## Local Setup
-1) Install dependencies
+
+### 1. Install dependencies
+
 ```bash
+npm install
+cd frontend
 npm install
 ```
 
-2) Configure environment variables
+### 2. Create `backend/.env`
 
-Create backend/.env:
 ```bash
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_secret
@@ -103,100 +153,93 @@ NODE_ENV=development
 PORT=5000
 ```
 
-3) Run the backend
+### 3. Run the backend
+
 ```bash
 npm run server
 ```
 
-
 You should see logs like:
 
-- Connected to mongoDB
-- Server running on port 5000
+- `Connected to mongoDB`
+- `Server running on port 5000`
 
-## Testing with curl (Reproducible)
+### 4. Run the frontend
 
-### Signup (creates user + sets cookie)
+```bash
+cd frontend
+npm run dev
+```
+
+Frontend usually runs on `http://localhost:5173`
+
+## How To Use / Test
+
+### Signup
+
 ```bash
 curl -i -X POST "http://localhost:5000/api/auth/signup" \
   -H "Content-Type: application/json" \
   -d '{"fullName":"your-name","username":"you","password":"123456","confirmPassword":"123456","gender":"female"}'
-  
 ```
 
-✅ Look for:
+Look for:
 
-HTTP/1.1 201 Created
+- `HTTP/1.1 201 Created`
+- `Set-Cookie: jwt=...; HttpOnly; SameSite=Strict; ...`
 
-Set-Cookie: jwt=...; HttpOnly; SameSite=Strict; ...
+### Login
 
-
-### Login (sets cookie again)
 ```bash
 curl -i -c cookies.txt -X POST "http://localhost:5000/api/auth/login" \
   -H "Content-Type: application/json" \
   -d '{"username":"you","password":"123456"}'
 ```
 
+### Logout
 
-### Logout (clears cookie immediately)
 ```bash
 curl -i -b cookies.txt -c cookies.txt -X POST "http://localhost:5000/api/auth/logout"
 ```
 
-✅ Look for:
+Look for:
 
-Set-Cookie: jwt=; Max-Age=0; ...
-
-Response: {"message":"Logged out successfully"}
-
-
+- `Set-Cookie: jwt=; Max-Age=0; ...`
+- `{"message":"Logged out successfully"}`
 
 ## Current Status
 
-### ✅ Done
+### Done
 
-- Backend + DB connection
-
-- User model (MongoDB)
-
-- Auth routes + controllers
-
-- Signup/login/logout working
-
+- Backend and DB connection
+- User model
+- Auth routes and controllers
+- Signup, login, and logout working
 - JWT cookie auth utility
-
 - Password hashing
+- Protected route middleware
+- Sidebar user fetching
+- Message sending foundation
+- Polished workspace and login UI
 
-- curl-based endpoint verification
+### In Progress
 
+- Connecting the frontend UI to live backend actions
+- Improving mobile-specific layout and spacing
+- Building out conversation and message flows
 
-### 🚧 In Progress
+### Planned
 
-- Profile picture logic polish
-
-- Input validation hardening (stronger schema-level validation)
-
-- Auth middleware + protected routes (/me)
-
-
-### 🧭 Planned (next milestones)
-
-- Conversations + Messages models
-
+- Full conversation history
 - Socket.io real-time messaging
-
-- Online presence + typing indicators
-
+- Online presence and typing indicators
 - Pagination for chat history
-
-- Tests (integration tests for auth + message endpoints)
-
+- Better validation and error states
 - Deployment
 
+## Notes (Security + Dev Environment)
 
-### Notes (Security + dev environment)
-
-- In development (localhost), cookies may show Secure=false depending on config.
-
-- In production, Secure should be enabled so cookies are only sent over HTTPS.
+- In development on localhost, cookies may show `Secure=false` depending on config.
+- In production, `Secure` should be enabled so cookies are only sent over HTTPS.
+- JWT is intentionally stored in cookies instead of `localStorage`.
+- Protected routes depend on the auth cookie being sent with the request.
