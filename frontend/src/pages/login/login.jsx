@@ -1,9 +1,131 @@
-import React from 'react'
-
-const login = () => {
+function Login() {
   return (
-    <div>login</div>
-  )
+    <div className="min-h-screen w-full px-4 pb-4 pt-24 text-slate-100 sm:px-6 lg:px-8">
+      <div className="mx-auto grid min-h-[calc(100vh-7rem)] max-w-[1440px] overflow-hidden rounded-[36px] border border-white/14 bg-slate-950/42 shadow-[0_36px_120px_rgba(2,6,23,0.55)] backdrop-blur-2xl lg:grid-cols-[1.35fr_0.95fr]">
+        <section className="relative hidden overflow-hidden border-r border-white/10 lg:flex">
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/35 via-transparent to-slate-950/60" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,229,255,0.16),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_28%)]" />
+
+          <div className="relative z-10 flex h-full w-full flex-col justify-between p-10 xl:p-14">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.42em] text-cyan-100/85">
+                Alpine Chat
+              </p>
+              <h1 className="mt-4 max-w-lg font-serif text-6xl leading-[0.95] text-white xl:text-7xl">
+                Evening
+                <br />
+                Edition
+              </h1>
+              <p className="mt-6 max-w-md text-base font-medium leading-8 text-slate-200">
+                A cinematic workspace for focused conversations, crafted with a darker palette, softer glass layers, and premium clarity.
+              </p>
+            </div>
+
+            <div className="max-w-lg rounded-[30px] border border-white/12 bg-slate-950/36 p-6 backdrop-blur-xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-100/80">
+                Why it works
+              </p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                <div>
+                  <p className="text-2xl font-bold text-white">20px</p>
+                  <p className="mt-1 text-sm font-medium text-slate-300">Glass blur depth</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">#00E5FF</p>
+                  <p className="mt-1 text-sm font-medium text-slate-300">Primary accent</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-white">100%</p>
+                  <p className="mt-1 text-sm font-medium text-slate-300">Responsive framing</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="flex items-center justify-center bg-slate-950/48 p-5 sm:p-8 lg:p-10">
+          <div className="w-full max-w-md rounded-[32px] border border-white/12 bg-[rgba(8,15,32,0.55)] p-6 shadow-[0_28px_80px_rgba(2,6,23,0.45)] backdrop-blur-[20px] sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-cyan-100/80">
+              Welcome back
+            </p>
+            <h2 className="mt-3 text-3xl font-semibold text-white sm:text-4xl">
+              Sign in to continue
+            </h2>
+            <p className="mt-3 text-sm font-medium leading-7 text-slate-200">
+              Keep the atmosphere, clarity, and polish consistent from the first screen to the workspace itself.
+            </p>
+
+            <form className="mt-8 space-y-5">
+              <label className="block">
+                <span className="mb-2 block text-sm font-semibold text-slate-200">
+                  Email
+                </span>
+                <input
+                  type="email"
+                  placeholder="haley@alpinechat.com"
+                  className="w-full rounded-[20px] border border-white/10 bg-slate-950/70 px-4 py-3.5 text-sm font-medium text-white outline-none transition duration-300 ease-in-out placeholder:text-slate-500 focus:border-cyan-300/55 focus:shadow-[0_0_0_1px_rgba(0,229,255,0.18)]"
+                />
+              </label>
+
+              <label className="block">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <span className="text-sm font-semibold text-slate-200">Password</span>
+                  <button
+                    type="button"
+                    className="text-sm font-semibold text-cyan-100 transition duration-300 ease-in-out hover:text-cyan-50"
+                  >
+                    Forgot?
+                  </button>
+                </div>
+                <input
+                  type="password"
+                  placeholder="Enter your password"
+                  className="w-full rounded-[20px] border border-white/10 bg-slate-950/70 px-4 py-3.5 text-sm font-medium text-white outline-none transition duration-300 ease-in-out placeholder:text-slate-500 focus:border-cyan-300/55 focus:shadow-[0_0_0_1px_rgba(0,229,255,0.18)]"
+                />
+              </label>
+
+              <div className="flex items-center justify-between gap-4">
+                <label className="flex items-center gap-3 text-sm font-medium text-slate-300">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 rounded border-white/20 bg-slate-900 text-cyan-300 focus:ring-cyan-300"
+                  />
+                  Keep me signed in
+                </label>
+                <span className="rounded-full border border-cyan-300/20 bg-cyan-300/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-50">
+                  Secure
+                </span>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full rounded-[22px] bg-[#00E5FF] px-5 py-4 text-sm font-semibold text-slate-950 transition duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-cyan-200 hover:shadow-[0_0_30px_rgba(0,229,255,0.32)]"
+              >
+                Sign In
+              </button>
+            </form>
+
+            <div className="mt-6 rounded-[24px] border border-white/10 bg-white/6 p-4">
+              <p className="text-sm font-semibold text-white">Professional dark system</p>
+              <p className="mt-2 text-sm font-medium leading-7 text-slate-300">
+                Centered on mobile, split-screen on desktop, with softened glass and higher-contrast copy for easier reading.
+              </p>
+            </div>
+
+            <p className="mt-6 text-center text-sm font-medium text-slate-300">
+              Need an account?{" "}
+              <button
+                type="button"
+                className="font-semibold text-cyan-100 transition duration-300 ease-in-out hover:text-cyan-50"
+              >
+                Create one
+              </button>
+            </p>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
 }
 
-export default login
+export default Login;

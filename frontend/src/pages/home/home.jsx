@@ -1,18 +1,20 @@
 const conversations = [
   {
     name: "Design Review",
-    preview: "The dark theme feels polished. Let’s keep this direction.",
+    preview: "The wider frame feels more useful now. The message area finally has room to breathe.",
     time: "2m ago",
     active: true,
+    unread: 3,
   },
   {
     name: "Product Team",
-    preview: "Can we make the composer feel lighter on mobile?",
+    preview: "The brighter cyan works much better for actions and active states.",
     time: "18m ago",
+    unread: 1,
   },
   {
     name: "Client Feedback",
-    preview: "This now feels premium and much easier to scan.",
+    preview: "Readability is much stronger and the right panel adds practical depth.",
     time: "1h ago",
   },
 ];
@@ -21,60 +23,70 @@ const messages = [
   {
     sender: "Ava",
     role: "Creative Lead",
-    text: "We kept the mountain background, then built a darker UI around it so the product feels calm, high-end, and focused.",
+    text: "We opened up the frame so the workspace feels premium instead of compressed. The extra width supports focus without making the reading line too long.",
   },
   {
     sender: "You",
     role: "Project Owner",
-    text: "Perfect. I want it to feel professional, smooth, and genuinely pleasant to use.",
+    text: "That balance feels right. It still looks cinematic, but now it reads like a real professional product.",
     isUser: true,
   },
   {
     sender: "Ava",
     role: "Creative Lead",
-    text: "That’s the direction here: clearer hierarchy, softer glass surfaces, stronger spacing, and a composer that invites action without clutter.",
+    text: "I also raised secondary text contrast, expanded the message cards, and gave the side panels stronger hierarchy so long sessions feel easier on the eyes.",
   },
 ];
 
-const quickActions = ["New message", "Schedule call", "Share deck"];
+const quickActions = ["New message", "Invite team", "Share deck"];
+const sharedFiles = [
+  { name: "Launch deck.pdf", type: "Presentation", size: "12 MB" },
+  { name: "Brand notes.fig", type: "Design file", size: "4 MB" },
+  { name: "Client recap.docx", type: "Document", size: "1 MB" },
+];
 
 function Home() {
   return (
-    <div className="min-h-screen w-full px-4 py-4 text-slate-100 sm:px-6 lg:px-8">
-      <div className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-7xl overflow-hidden rounded-[32px] border border-white/12 bg-slate-950/45 shadow-[0_30px_120px_rgba(2,6,23,0.6)] backdrop-blur-xl">
-        <aside className="hidden w-[320px] flex-col border-r border-white/10 bg-slate-950/55 p-6 lg:flex">
-          <div className="mb-8 flex items-center justify-between">
+    <div className="min-h-screen w-full px-4 pb-4 pt-24 text-slate-100 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-[calc(100vh-7rem)] max-w-[1440px] overflow-hidden rounded-[36px] border border-white/14 bg-slate-950/48 shadow-[0_36px_120px_rgba(2,6,23,0.58)] backdrop-blur-2xl">
+        <aside className="hidden w-[340px] flex-col border-r border-white/12 bg-slate-950/64 p-7 xl:flex">
+          <div className="mb-8 flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-cyan-200/70">
+              <p className="text-xs font-semibold uppercase tracking-[0.42em] text-cyan-100/80">
                 Alpine Chat
               </p>
-              <h1 className="mt-2 font-serif text-3xl text-white">
+              <h1 className="mt-2 font-serif text-4xl leading-none text-white">
                 Evening Edition
               </h1>
+              <p className="mt-3 max-w-xs text-sm font-medium leading-6 text-slate-300">
+                A calmer, wider workspace built for polished collaboration.
+              </p>
             </div>
-            <button className="rounded-full border border-white/10 bg-white/8 px-4 py-2 text-sm font-medium text-slate-100 transition hover:bg-white/14">
+            <button className="rounded-full border border-cyan-300/25 bg-cyan-300/12 px-4 py-2 text-sm font-semibold text-cyan-100 transition duration-300 ease-in-out hover:border-cyan-200/40 hover:bg-cyan-300/18 hover:shadow-[0_0_24px_rgba(0,229,255,0.18)]">
               Upgrade
             </button>
           </div>
 
-          <div className="mb-6 rounded-[24px] border border-white/10 bg-white/6 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-400">
+          <div className="mb-6 rounded-[28px] border border-white/12 bg-white/7 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-300">
               Workspace
             </p>
-            <div className="mt-4 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-300/18 text-lg font-semibold text-cyan-100">
+            <div className="mt-4 flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-cyan-300/18 text-lg font-bold text-cyan-100">
                 HT
               </div>
               <div>
-                <p className="font-medium text-white">Haley Tran</p>
-                <p className="text-sm text-slate-400">Creative collaboration</p>
+                <p className="font-semibold text-white">Haley Tran</p>
+                <p className="text-sm font-medium text-slate-300">
+                  Creative direction and client messaging
+                </p>
               </div>
             </div>
           </div>
 
           <div className="mb-4 flex items-center justify-between">
-            <p className="text-sm font-medium text-slate-300">Recent chats</p>
-            <button className="text-sm text-cyan-200 transition hover:text-cyan-100">
+            <p className="text-sm font-semibold text-slate-200">Recent chats</p>
+            <button className="text-sm font-semibold text-cyan-100 transition hover:text-cyan-50">
               View all
             </button>
           </div>
@@ -83,50 +95,60 @@ function Home() {
             {conversations.map((conversation) => (
               <button
                 key={conversation.name}
-                className={`w-full rounded-[22px] border p-4 text-left transition duration-300 ${
+                className={`w-full rounded-[24px] border p-4 text-left transition duration-300 ease-in-out ${
                   conversation.active
-                    ? "border-cyan-300/30 bg-cyan-300/14 shadow-[0_18px_40px_rgba(34,211,238,0.08)]"
-                    : "border-white/8 bg-white/5 hover:bg-white/8"
+                    ? "border-cyan-300/34 bg-cyan-300/16 shadow-[0_20px_45px_rgba(0,229,255,0.11)]"
+                    : "border-white/10 bg-white/6 hover:bg-white/9"
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-medium text-white">{conversation.name}</p>
-                  <span className="text-xs text-slate-400">{conversation.time}</span>
+                  <p className="font-semibold text-white">{conversation.name}</p>
+                  <div className="flex items-center gap-2">
+                    {conversation.unread ? (
+                      <span className="rounded-full bg-cyan-300 px-2 py-0.5 text-[11px] font-bold text-slate-950">
+                        {conversation.unread}
+                      </span>
+                    ) : null}
+                    <span className="text-xs font-medium text-slate-300">{conversation.time}</span>
+                  </div>
                 </div>
-                <p className="mt-2 text-sm text-slate-300/85">
+                <p className="mt-2 text-sm font-medium leading-6 text-slate-200">
                   {conversation.preview}
                 </p>
               </button>
             ))}
           </div>
 
-          <div className="mt-auto rounded-[24px] border border-white/10 bg-gradient-to-br from-cyan-300/18 via-slate-900/40 to-white/6 p-5">
-            <p className="text-xs uppercase tracking-[0.35em] text-cyan-100/70">
+          <div className="mt-auto rounded-[28px] border border-cyan-300/18 bg-gradient-to-br from-cyan-300/18 via-slate-900/55 to-white/7 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-50/85">
               Performance
             </p>
-            <p className="mt-3 text-3xl font-semibold text-white">98%</p>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              Faster visual scanning with calmer contrast and more deliberate spacing.
+            <p className="mt-3 text-3xl font-bold text-white">98%</p>
+            <p className="mt-2 text-sm font-medium leading-6 text-slate-200">
+              Faster scanning, stronger contrast, and more room for primary content.
             </p>
           </div>
         </aside>
 
-        <section className="flex min-h-[calc(100vh-2rem)] flex-1 flex-col bg-gradient-to-b from-slate-950/28 via-slate-950/18 to-slate-950/38">
-          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-8">
+        <section className="flex min-h-[calc(100vh-7rem)] flex-1 flex-col bg-gradient-to-b from-slate-950/32 via-slate-950/20 to-slate-950/42">
+          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/12 px-5 py-5 sm:px-8">
             <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/70">
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-100/80">
                 Active conversation
               </p>
-              <h2 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">
+              <h2 className="mt-2 text-3xl font-semibold text-white">
                 Design Review
               </h2>
+              <p className="mt-2 text-sm font-medium text-slate-300">
+                Cinematic dark mode with better usability for longer working sessions.
+              </p>
             </div>
 
-            <div className="flex w-full flex-wrap gap-3 sm:w-auto">
+            <div className="flex w-full flex-wrap gap-3 md:w-auto">
               {quickActions.map((action) => (
                 <button
                   key={action}
-                  className="rounded-full border border-white/10 bg-white/8 px-4 py-2 text-sm text-slate-100 transition hover:-translate-y-0.5 hover:bg-white/14"
+                  className="rounded-full border border-white/12 bg-white/8 px-4 py-2.5 text-sm font-semibold text-slate-100 transition duration-300 ease-in-out hover:-translate-y-0.5 hover:border-cyan-300/24 hover:bg-white/12 hover:shadow-[0_0_24px_rgba(0,229,255,0.12)]"
                 >
                   {action}
                 </button>
@@ -134,65 +156,74 @@ function Home() {
             </div>
           </header>
 
-          <div className="grid flex-1 gap-4 px-4 py-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-8">
-            <div className="flex min-h-[420px] flex-col rounded-[28px] border border-white/10 bg-slate-950/38 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] sm:p-6">
-              <div className="mb-5 flex items-center gap-3 lg:hidden">
-                <div className="h-11 w-11 rounded-2xl bg-cyan-300/20" />
-                <div>
-                  <p className="font-medium text-white">Haley Tran</p>
-                  <p className="text-sm text-slate-400">Luxury dark workspace</p>
+          <div className="grid flex-1 gap-4 px-4 py-4 sm:px-6 xl:grid-cols-[minmax(0,1.3fr)_320px] xl:px-8">
+            <div className="flex min-h-[480px] flex-col rounded-[30px] border border-white/12 bg-slate-950/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-6 lg:p-7">
+              <div className="mb-6 flex items-center justify-between gap-4 xl:hidden">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-300/20 text-sm font-bold text-cyan-50">
+                    HT
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">Haley Tran</p>
+                    <p className="text-sm font-medium text-slate-300">Luxury dark workspace</p>
+                  </div>
                 </div>
+                <span className="rounded-full border border-cyan-300/24 bg-cyan-300/12 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-50">
+                  Focus mode
+                </span>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {messages.map((message) => (
                   <div
                     key={`${message.sender}-${message.text}`}
-                    className={`max-w-2xl rounded-[24px] border px-4 py-4 sm:px-5 ${
+                    className={`w-full rounded-[28px] border px-5 py-5 transition duration-300 ease-in-out lg:px-6 ${
                       message.isUser
-                        ? "ml-auto border-cyan-300/25 bg-cyan-300/14 text-slate-50"
-                        : "border-white/10 bg-white/6 text-slate-100"
+                        ? "ml-auto max-w-3xl border-cyan-300/30 bg-cyan-300/15 text-slate-50 shadow-[0_18px_40px_rgba(0,229,255,0.08)]"
+                        : "max-w-4xl border-white/12 bg-white/7 text-slate-100"
                     }`}
                   >
-                    <div className="mb-2 flex items-center gap-3">
-                      <p className="font-medium">{message.sender}</p>
-                      <span className="text-xs uppercase tracking-[0.25em] text-slate-400">
+                    <div className="mb-3 flex flex-wrap items-center gap-3">
+                      <p className="font-semibold text-white">{message.sender}</p>
+                      <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">
                         {message.role}
                       </span>
                     </div>
-                    <p className="text-sm leading-7 text-slate-200/90">{message.text}</p>
+                    <p className="text-[15px] font-medium leading-8 text-slate-100/95">
+                      {message.text}
+                    </p>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-auto pt-6">
-                <div className="rounded-[28px] border border-white/12 bg-slate-950/70 p-3 shadow-[0_24px_50px_rgba(15,23,42,0.35)]">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              <div className="mt-auto pt-7">
+                <div className="rounded-[30px] border border-white/12 bg-slate-950/78 p-3 shadow-[0_28px_60px_rgba(15,23,42,0.4)]">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
                     <label className="flex-1">
                       <span className="sr-only">Message</span>
                       <textarea
-                        className="min-h-[112px] w-full resize-none rounded-[22px] border border-white/10 bg-white/6 px-4 py-4 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-300/40 focus:bg-white/8"
+                        className="min-h-[132px] w-full resize-none rounded-[24px] border border-white/12 bg-white/7 px-5 py-4 text-sm font-medium text-white outline-none transition duration-300 ease-in-out placeholder:text-slate-400 focus:border-cyan-300/50 focus:bg-white/10 focus:shadow-[0_0_0_1px_rgba(0,229,255,0.12)]"
                         placeholder="Draft a refined response, gather client notes, or start a new conversation..."
                       />
                     </label>
-                    <button className="rounded-[22px] bg-cyan-300 px-5 py-4 font-medium text-slate-950 transition duration-300 hover:-translate-y-0.5 hover:bg-cyan-200">
+                    <button className="rounded-[24px] bg-[#00E5FF] px-6 py-4 font-semibold text-slate-950 transition duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-cyan-200 hover:shadow-[0_0_28px_rgba(0,229,255,0.3)]">
                       Send Message
                     </button>
                   </div>
 
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-2">
-                    <div className="flex flex-wrap gap-2 text-xs text-slate-400">
-                      <span className="rounded-full border border-white/10 px-3 py-1">
+                    <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
+                      <span className="rounded-full border border-white/12 px-3 py-1">
                         Smooth motion
                       </span>
-                      <span className="rounded-full border border-white/10 px-3 py-1">
+                      <span className="rounded-full border border-white/12 px-3 py-1">
                         Easy scanning
                       </span>
-                      <span className="rounded-full border border-white/10 px-3 py-1">
+                      <span className="rounded-full border border-white/12 px-3 py-1">
                         Premium finish
                       </span>
                     </div>
-                    <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
                       Live draft
                     </p>
                   </div>
@@ -200,30 +231,59 @@ function Home() {
               </div>
             </div>
 
-            <aside className="rounded-[28px] border border-white/10 bg-slate-950/42 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
-              <p className="text-xs uppercase tracking-[0.35em] text-cyan-200/70">
-                Session details
+            <aside className="rounded-[30px] border border-white/12 bg-slate-950/48 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-100/80">
+                Media and files
               </p>
               <h3 className="mt-3 text-xl font-semibold text-white">
-                Professional and calm by default
+                Supporting context, without clutter
               </h3>
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                The layout uses strong spacing, softened borders, and restrained highlights so the interface feels premium without becoming noisy.
+              <p className="mt-3 text-sm font-medium leading-7 text-slate-200">
+                The right rail uses the extra width for practical context, which makes the overall frame feel intentional rather than empty.
               </p>
 
-              <div className="mt-6 space-y-3">
-                <div className="rounded-[22px] border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm text-slate-400">Focus mode</p>
-                  <p className="mt-2 font-medium text-white">Reduced clutter, clearer actions</p>
+              <div className="mt-6 rounded-[24px] border border-white/12 bg-gradient-to-br from-white/10 to-white/5 p-4">
+                <p className="text-sm font-semibold text-slate-200">Shared this week</p>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-[20px] border border-white/10 bg-slate-900/60 p-4">
+                    <p className="text-2xl font-bold text-white">24</p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
+                      Assets
+                    </p>
+                  </div>
+                  <div className="rounded-[20px] border border-cyan-300/18 bg-cyan-300/12 p-4">
+                    <p className="text-2xl font-bold text-white">8</p>
+                    <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-50">
+                      Reviews
+                    </p>
+                  </div>
                 </div>
-                <div className="rounded-[22px] border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm text-slate-400">Visual system</p>
-                  <p className="mt-2 font-medium text-white">Dark glass layers with subtle cyan accents</p>
-                </div>
-                <div className="rounded-[22px] border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm text-slate-400">Usability</p>
-                  <p className="mt-2 font-medium text-white">Comfortable inputs and responsive stacking</p>
-                </div>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {sharedFiles.map((file) => (
+                  <div
+                    key={file.name}
+                    className="rounded-[22px] border border-white/12 bg-white/6 p-4 transition duration-300 ease-in-out hover:border-cyan-300/24 hover:bg-white/8"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-white">{file.name}</p>
+                        <p className="mt-1 text-sm font-medium text-slate-300">{file.type}</p>
+                      </div>
+                      <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        {file.size}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-5 rounded-[24px] border border-white/12 bg-white/6 p-4">
+                <p className="text-sm font-semibold text-slate-200">Design direction</p>
+                <p className="mt-2 text-sm font-medium leading-7 text-slate-300">
+                  Wider framing, brighter accents, and stronger type contrast push the concept closer to a truly usable luxury product.
+                </p>
               </div>
             </aside>
           </div>
