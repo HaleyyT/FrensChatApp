@@ -144,14 +144,27 @@ cd frontend
 npm install
 ```
 
-### 2. Create `backend/.env`
+### 2. Create `.env` in the project root
 
 ```bash
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_secret
-NODE_ENV=development
+# Local backend port
 PORT=5000
+
+# Frontend origin allowed to send cookie-based requests to the API
+CLIENT_URL=http://localhost:5173
+
+# Use "development" locally and "production" when deployed
+NODE_ENV=development
+
+# MongoDB connection string
+MONGO_URI=your_mongodb_connection_string
+
+# A long random secret used to sign JWT auth cookies
+JWT_SECRET=your_secret
 ```
+
+You can copy from `.env.example`.
+Never commit your real `.env` file or paste live secrets into the repository.
 
 ### 3. Run the backend
 
