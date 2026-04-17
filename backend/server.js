@@ -7,10 +7,11 @@ import connectToMongoDB from "./db/connectToMongoDB.js";
 import userRoutes from "./routes/user.routes.js";
 import cors from "cors";
 
+// Load environment variables before reading config such as PORT or CLIENT_URL.
+dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-dotenv.config();
 
 app.use(express.json()); 
 app.use(cookieParser());
