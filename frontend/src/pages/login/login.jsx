@@ -1,4 +1,30 @@
-function Login() {
+import { useState } from "react";
+import PropTypes from "prop-types";
+import { login } from "../../lib/api";
+
+function Login({ onLoginSuccess }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+
+    // Reset the last attempt so the current submission can show fresh feedback.
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const user = await login({ username, password });
+      onLoginSuccess(user);
+    } catch (submitError) {
+      setError(submitError.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen w-full px-4 pb-6 pt-24 text-slate-100 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
       <div className="mx-auto grid min-h-[calc(100vh-8.5rem)] max-w-[1000px] overflow-hidden rounded-[32px] border border-white/14 bg-slate-950/42 shadow-[0_36px_120px_rgba(2,6,23,0.55)] backdrop-blur-2xl lg:grid-cols-[1.2fr_0.88fr]">
@@ -55,14 +81,17 @@ function Login() {
               Keep the atmosphere, clarity, and polish consistent from the first screen to the workspace itself.
             </p>
 
-            <form className="mt-6 space-y-4">
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
               <label className="block">
                 <span className="mb-2 block text-sm font-semibold text-slate-200">
-                  Email
+                  Username
                 </span>
                 <input
-                  type="email"
-                  placeholder="haley@alpinechat.com"
+                  type="text"
+                  value={username}
+                  onChange={(event) => setUsername(event.target.value)}
+                  placeholder="haleytran"
+                  autoComplete="username"
                   className="w-full rounded-[18px] border border-white/10 bg-slate-950/70 px-4 py-3 text-sm font-medium text-white outline-none transition duration-300 ease-in-out placeholder:text-slate-500 focus:border-cyan-300/55 focus:shadow-[0_0_0_1px_rgba(0,229,255,0.18)]"
                 />
               </label>
@@ -79,10 +108,19 @@ function Login() {
                 </div>
                 <input
                   type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
                   placeholder="Enter your password"
+                  autoComplete="current-password"
                   className="w-full rounded-[18px] border border-white/10 bg-slate-950/70 px-4 py-3 text-sm font-medium text-white outline-none transition duration-300 ease-in-out placeholder:text-slate-500 focus:border-cyan-300/55 focus:shadow-[0_0_0_1px_rgba(0,229,255,0.18)]"
                 />
               </label>
+
+              {error ? (
+                <div className="rounded-[18px] border border-rose-300/20 bg-rose-400/10 px-4 py-3 text-sm font-medium text-rose-100">
+                  {error}
+                </div>
+              ) : null}
 
               <div className="flex items-center justify-between gap-4">
                 <label className="flex items-center gap-3 text-sm font-medium text-slate-300">
@@ -99,9 +137,10 @@ function Login() {
 
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full rounded-[18px] bg-[#00E5FF] px-5 py-3.5 text-sm font-semibold text-slate-950 transition duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-cyan-200 hover:shadow-[0_0_30px_rgba(0,229,255,0.32)]"
               >
-                Sign In
+                {isSubmitting ? "Signing In..." : "Sign In"}
               </button>
             </form>
 
@@ -118,7 +157,7 @@ function Login() {
                 type="button"
                 className="font-semibold text-cyan-100 transition duration-300 ease-in-out hover:text-cyan-50"
               >
-                Create one
+                Create one soon
               </button>
             </p>
           </div>
@@ -127,5 +166,9 @@ function Login() {
     </div>
   );
 }
+
+Login.propTypes = {
+  onLoginSuccess: PropTypes.func.isRequired,
+};
 
 export default Login;

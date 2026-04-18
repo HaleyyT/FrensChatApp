@@ -1,3 +1,6 @@
+import PropTypes from "prop-types";
+import { logout } from "../../lib/api";
+
 const conversations = [
   {
     name: "Design Review",
@@ -45,7 +48,16 @@ const sharedFiles = [
   { name: "Client recap.docx", type: "Document", size: "1 MB" },
 ];
 
-function Home() {
+function Home({ currentUser, onLogout }) {
+  async function handleLogout() {
+    try {
+      await logout();
+      onLogout();
+    } catch (error) {
+      console.error("Error logging out", error);
+    }
+  }
+
   return (
     <div className="min-h-screen w-full px-4 pb-6 pt-24 text-slate-100 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
       <div className="mx-auto flex min-h-[calc(100vh-8.5rem)] max-w-[1000px] overflow-hidden rounded-[32px] border border-white/14 bg-slate-950/48 shadow-[0_36px_120px_rgba(2,6,23,0.58)] backdrop-blur-2xl">
@@ -62,8 +74,12 @@ function Home() {
                 A calmer, wider workspace built for polished collaboration.
               </p>
             </div>
-            <button className="rounded-full border border-cyan-300/25 bg-cyan-300/12 px-4 py-2 text-sm font-semibold text-cyan-100 transition duration-300 ease-in-out hover:border-cyan-200/40 hover:bg-cyan-300/18 hover:shadow-[0_0_24px_rgba(0,229,255,0.18)]">
-              Upgrade
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-full border border-cyan-300/25 bg-cyan-300/12 px-4 py-2 text-sm font-semibold text-cyan-100 transition duration-300 ease-in-out hover:border-cyan-200/40 hover:bg-cyan-300/18 hover:shadow-[0_0_24px_rgba(0,229,255,0.18)]"
+            >
+              Log out
             </button>
           </div>
 
@@ -73,13 +89,11 @@ function Home() {
             </p>
             <div className="mt-4 flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-cyan-300/18 text-base font-bold text-cyan-100">
-                HT
+                {currentUser.fullName.slice(0, 2).toUpperCase()}
               </div>
               <div>
-                <p className="font-semibold text-white">Haley Tran</p>
-                <p className="text-sm font-medium text-slate-300">
-                  Creative direction and client messaging
-                </p>
+                <p className="font-semibold text-white">{currentUser.fullName}</p>
+                <p className="text-sm font-medium text-slate-300">@{currentUser.username}</p>
               </div>
             </div>
           </div>
@@ -292,5 +306,13 @@ function Home() {
     </div>
   );
 }
+
+Home.propTypes = {
+  currentUser: PropTypes.shape({
+    fullName: PropTypes.string.isRequired,
+    username: PropTypes.string.isRequired,
+  }).isRequired,
+  onLogout: PropTypes.func.isRequired,
+};
 
 export default Home;
