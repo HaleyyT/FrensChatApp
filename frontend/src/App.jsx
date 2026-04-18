@@ -3,7 +3,7 @@ import "./App.css";
 import Home from "./pages/home/home";
 import Login from "./pages/login/login";
 import SignUp from "./pages/signup/signUp";
-import { getCurrentUser } from "./lib/api";
+import { getCurrentUser, logout } from "./lib/api";
 
 function App() {
   // Keep the authenticated user at the app level so every screen can react to login/logout.
@@ -27,6 +27,29 @@ function App() {
     restoreSession();
   }, []);
 
+  async function handleAuthToggle(nextView) {
+    if (nextView === "workspace") {
+      if (!currentUser) {
+        setAuthView("login");
+      }
+      return;
+    }
+
+    if (currentUser) {
+      try {
+        await logout();
+      } catch (error) {
+        console.error("Error logging out", error);
+      } finally {
+        setCurrentUser(null);
+        setAuthView("login");
+      }
+      return;
+    }
+
+    setAuthView("login");
+  }
+
   if (isCheckingSession) {
     return (
       <main className="app-shell">
@@ -43,15 +66,28 @@ function App() {
     <main className="app-shell">
       <div className="pointer-events-none fixed inset-x-0 top-5 z-20 flex justify-center px-4">
         <div className="pointer-events-auto inline-flex rounded-full border border-white/12 bg-slate-950/55 p-1.5 shadow-[0_18px_40px_rgba(2,6,23,0.35)] backdrop-blur-xl">
-          <div
-            className={`rounded-full px-3.5 py-1.5 text-sm font-semibold sm:px-4 ${
+          <button
+            type="button"
+            onClick={() => handleAuthToggle("workspace")}
+            className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition duration-300 ease-in-out sm:px-4 ${
               currentUser
                 ? "bg-cyan-300 text-slate-950 shadow-[0_0_30px_rgba(0,229,255,0.28)]"
-                : "text-slate-200"
+                : "text-slate-200 hover:bg-white/8 hover:text-white"
             }`}
           >
-            {currentUser ? `Workspace: ${currentUser.username}` : "Login"}
-          </div>
+            Workspace
+          </button>
+          <button
+            type="button"
+            onClick={() => handleAuthToggle("login")}
+            className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition duration-300 ease-in-out sm:px-4 ${
+              currentUser
+                ? "text-slate-200 hover:bg-white/8 hover:text-white"
+                : "bg-cyan-300 text-slate-950 shadow-[0_0_30px_rgba(0,229,255,0.28)]"
+            }`}
+          >
+            Login
+          </button>
         </div>
       </div>
 
