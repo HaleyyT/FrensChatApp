@@ -2,7 +2,7 @@ import { useState } from "react";
 import PropTypes from "prop-types";
 import { login } from "../../lib/api";
 
-function Login({ onLoginSuccess }) {
+function Login({ onLoginSuccess, onShowSignUp }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -155,9 +155,10 @@ function Login({ onLoginSuccess }) {
               Need an account?{" "}
               <button
                 type="button"
+                onClick={onShowSignUp}
                 className="font-semibold text-cyan-100 transition duration-300 ease-in-out hover:text-cyan-50"
               >
-                Create one soon
+                Create one
               </button>
             </p>
           </div>
@@ -169,6 +170,7 @@ function Login({ onLoginSuccess }) {
 
 Login.propTypes = {
   onLoginSuccess: PropTypes.func.isRequired,
+  onShowSignUp: PropTypes.func.isRequired,
 };
 
 export default Login;

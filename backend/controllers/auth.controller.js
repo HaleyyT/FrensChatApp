@@ -105,3 +105,13 @@ export const logout = async (req, res) => {
         res.status(500).json({error: "Internal server error"});
     }
 };
+
+export const getMe = async (req, res) => {
+    try {
+        // protectRoutes already checks the cookie and attaches the safe user object to the request.
+        return res.status(200).json(req.user);
+    } catch (error) {
+        console.log("Error in getMe controller", error.message);
+        return res.status(500).json({error: "Internal server error"});
+    }
+};
