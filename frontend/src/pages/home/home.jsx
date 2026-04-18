@@ -1,5 +1,6 @@
+import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { logout } from "../../lib/api";
+import { getMessages, getUsers, logout } from "../../lib/api";
 
 const conversations = [
   {
@@ -53,6 +54,90 @@ function Home({ currentUser, onLogout }) {
     fullName: "Haley Tran",
     username: "haleytran",
   };
+  const isPreviewMode = !currentUser;
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState("");
+  const [liveMessages, setLiveMessages] = useState([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+
+  useEffect(() => {
+    if (isPreviewMode) {
+      return;
+    }
+
+    async function loadUsers() {
+      setIsLoadingUsers(true);
+
+      try {
+        const data = await getUsers();
+        const sidebarUsers = data.filterUsers || [];
+
+        // Store the real sidebar users so the workspace can stop relying on the mock list after login.
+        setUsers(sidebarUsers);
+
+        if (sidebarUsers.length > 0) {
+          setSelectedUserId(sidebarUsers[0]._id);
+        }
+      } catch (error) {
+        console.error("Error loading users", error);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    }
+
+    loadUsers();
+  }, [isPreviewMode]);
+
+  useEffect(() => {
+    if (isPreviewMode || !selectedUserId) {
+      return;
+    }
+
+    async function loadMessages() {
+      setIsLoadingMessages(true);
+
+      try {
+        const data = await getMessages(selectedUserId);
+        setLiveMessages(data);
+      } catch (error) {
+        console.error("Error loading messages", error);
+      } finally {
+        setIsLoadingMessages(false);
+      }
+    }
+
+    // Reload the conversation every time a different sidebar user is selected.
+    loadMessages();
+  }, [isPreviewMode, selectedUserId]);
+
+  const selectedUser = users.find((user) => user._id === selectedUserId) || null;
+  const sidebarItems = isPreviewMode
+    ? conversations
+    : users.map((user) => ({
+        id: user._id,
+        name: user.fullName,
+        preview: `@${user.username}`,
+        time: "",
+        active: user._id === selectedUserId,
+      }));
+  const activeConversationTitle = isPreviewMode
+    ? "Design Review"
+    : selectedUser?.fullName || "Select a conversation";
+  const activeConversationSubtitle = isPreviewMode
+    ? "Cinematic dark mode with better usability for longer working sessions."
+    : selectedUser
+      ? `Conversation with @${selectedUser.username}`
+      : "Choose someone from the sidebar to load real messages.";
+  const renderedMessages = isPreviewMode
+    ? messages
+    : liveMessages.map((message) => ({
+        id: message._id,
+        sender: message.senderId === currentUser?._id ? "You" : selectedUser?.fullName || "Teammate",
+        role: message.senderId === currentUser?._id ? "Project Owner" : "Conversation",
+        text: message.message,
+        isUser: message.senderId === currentUser?._id,
+      }));
 
   async function handleLogout() {
     try {
@@ -117,31 +202,45 @@ function Home({ currentUser, onLogout }) {
           </div>
 
           <div className="space-y-3">
-            {conversations.map((conversation) => (
-              <button
-                key={conversation.name}
-                className={`w-full rounded-[20px] border p-3.5 text-left transition duration-300 ease-in-out ${
-                  conversation.active
-                    ? "border-cyan-300/34 bg-cyan-300/16 shadow-[0_20px_45px_rgba(0,229,255,0.11)]"
-                    : "border-white/10 bg-white/6 hover:bg-white/9"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <p className="font-semibold text-white">{conversation.name}</p>
-                  <div className="flex items-center gap-2">
-                    {conversation.unread ? (
-                      <span className="rounded-full bg-cyan-300 px-2 py-0.5 text-[11px] font-bold text-slate-950">
-                        {conversation.unread}
-                      </span>
-                    ) : null}
-                    <span className="text-xs font-medium text-slate-300">{conversation.time}</span>
+            {isLoadingUsers && !isPreviewMode ? (
+              <div className="rounded-[20px] border border-white/10 bg-white/6 p-4 text-sm font-medium text-slate-300">
+                Loading conversations...
+              </div>
+            ) : (
+              sidebarItems.map((conversation) => (
+                <button
+                  key={conversation.id || conversation.name}
+                  type="button"
+                  onClick={() => {
+                    if (!isPreviewMode && conversation.id) {
+                      setSelectedUserId(conversation.id);
+                    }
+                  }}
+                  className={`w-full rounded-[20px] border p-3.5 text-left transition duration-300 ease-in-out ${
+                    conversation.active
+                      ? "border-cyan-300/34 bg-cyan-300/16 shadow-[0_20px_45px_rgba(0,229,255,0.11)]"
+                      : "border-white/10 bg-white/6 hover:bg-white/9"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-semibold text-white">{conversation.name}</p>
+                    <div className="flex items-center gap-2">
+                      {conversation.unread ? (
+                        <span className="rounded-full bg-cyan-300 px-2 py-0.5 text-[11px] font-bold text-slate-950">
+                          {conversation.unread}
+                        </span>
+                      ) : null}
+                      {conversation.time ? (
+                        <span className="text-xs font-medium text-slate-300">{conversation.time}</span>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-                <p className="mt-2 text-sm font-medium leading-6 text-slate-200">
-                  {conversation.preview}
-                </p>
-              </button>
-            ))}
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-200">
+                    {conversation.preview}
+                  </p>
+                </button>
+              ))
+            )}
           </div>
 
           <div className="mt-auto rounded-[24px] border border-cyan-300/18 bg-gradient-to-br from-cyan-300/18 via-slate-900/55 to-white/7 p-4">
@@ -162,10 +261,10 @@ function Home({ currentUser, onLogout }) {
                 Active conversation
               </p>
               <h2 className="mt-2 text-[2rem] font-semibold text-white">
-                Design Review
+                {activeConversationTitle}
               </h2>
               <p className="mt-2 text-sm font-medium text-slate-300">
-                Cinematic dark mode with better usability for longer working sessions.
+                {activeConversationSubtitle}
               </p>
             </div>
 
@@ -199,26 +298,38 @@ function Home({ currentUser, onLogout }) {
               </div>
 
               <div className="space-y-5">
-                {messages.map((message) => (
-                  <div
-                    key={`${message.sender}-${message.text}`}
-                    className={`w-full rounded-[22px] border px-4 py-4 transition duration-300 ease-in-out lg:px-5 ${
-                      message.isUser
-                        ? "ml-auto max-w-2xl border-cyan-300/30 bg-cyan-300/15 text-slate-50 shadow-[0_18px_40px_rgba(0,229,255,0.08)]"
-                        : "max-w-3xl border-white/12 bg-white/7 text-slate-100"
-                    }`}
-                  >
-                    <div className="mb-3 flex flex-wrap items-center gap-3">
-                      <p className="font-semibold text-white">{message.sender}</p>
-                      <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">
-                        {message.role}
-                      </span>
-                    </div>
-                    <p className="text-sm font-medium leading-7 text-slate-100/95">
-                      {message.text}
-                    </p>
+                {isLoadingMessages && !isPreviewMode ? (
+                  <div className="rounded-[22px] border border-white/12 bg-white/7 px-4 py-4 text-sm font-medium text-slate-300">
+                    Loading messages...
                   </div>
-                ))}
+                ) : renderedMessages.length > 0 ? (
+                  renderedMessages.map((message) => (
+                    <div
+                      key={message.id || `${message.sender}-${message.text}`}
+                      className={`w-full rounded-[22px] border px-4 py-4 transition duration-300 ease-in-out lg:px-5 ${
+                        message.isUser
+                          ? "ml-auto max-w-2xl border-cyan-300/30 bg-cyan-300/15 text-slate-50 shadow-[0_18px_40px_rgba(0,229,255,0.08)]"
+                          : "max-w-3xl border-white/12 bg-white/7 text-slate-100"
+                      }`}
+                    >
+                      <div className="mb-3 flex flex-wrap items-center gap-3">
+                        <p className="font-semibold text-white">{message.sender}</p>
+                        <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">
+                          {message.role}
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium leading-7 text-slate-100/95">
+                        {message.text}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <div
+                    className="w-full rounded-[22px] border border-white/12 bg-white/7 px-4 py-4 text-sm font-medium leading-7 text-slate-300 lg:px-5"
+                  >
+                    No messages yet. Start the conversation to populate this panel with live chat history.
+                  </div>
+                )}
               </div>
 
               <div className="mt-auto pt-7">
@@ -320,6 +431,7 @@ function Home({ currentUser, onLogout }) {
 
 Home.propTypes = {
   currentUser: PropTypes.shape({
+    _id: PropTypes.string.isRequired,
     fullName: PropTypes.string.isRequired,
     username: PropTypes.string.isRequired,
   }),

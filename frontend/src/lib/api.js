@@ -38,6 +38,14 @@ export function getCurrentUser() {
   return apiRequest("/auth/me");
 }
 
+export function getUsers() {
+  return apiRequest("/user/");
+}
+
+export function getMessages(userId) {
+  return apiRequest(`/message/${userId}`);
+}
+
 export function logout() {
   return apiRequest("/auth/logout", {
     method: "POST",
