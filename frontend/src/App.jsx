@@ -9,6 +9,7 @@ function App() {
   // Keep the authenticated user at the app level so every screen can react to login/logout.
   const [currentUser, setCurrentUser] = useState(null);
   const [authView, setAuthView] = useState("login");
+  const [showWorkspacePreview, setShowWorkspacePreview] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   useEffect(() => {
@@ -29,9 +30,8 @@ function App() {
 
   async function handleAuthToggle(nextView) {
     if (nextView === "workspace") {
-      if (!currentUser) {
-        setAuthView("login");
-      }
+      // Allow the workspace button to keep acting like a visual preview when no session exists yet.
+      setShowWorkspacePreview(true);
       return;
     }
 
@@ -43,11 +43,13 @@ function App() {
       } finally {
         setCurrentUser(null);
         setAuthView("login");
+        setShowWorkspacePreview(false);
       }
       return;
     }
 
     setAuthView("login");
+    setShowWorkspacePreview(false);
   }
 
   if (isCheckingSession) {
@@ -66,22 +68,22 @@ function App() {
     <main className="app-shell">
       <div className="pointer-events-none fixed inset-x-0 top-5 z-20 flex justify-center px-4">
         <div className="pointer-events-auto inline-flex rounded-full border border-white/12 bg-slate-950/55 p-1.5 shadow-[0_18px_40px_rgba(2,6,23,0.35)] backdrop-blur-xl">
-          <button
-            type="button"
-            onClick={() => handleAuthToggle("workspace")}
-            className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition duration-300 ease-in-out sm:px-4 ${
-              currentUser
+            <button
+              type="button"
+              onClick={() => handleAuthToggle("workspace")}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition duration-300 ease-in-out sm:px-4 ${
+              currentUser || showWorkspacePreview
                 ? "bg-cyan-300 text-slate-950 shadow-[0_0_30px_rgba(0,229,255,0.28)]"
                 : "text-slate-200 hover:bg-white/8 hover:text-white"
             }`}
           >
             Workspace
           </button>
-          <button
-            type="button"
-            onClick={() => handleAuthToggle("login")}
-            className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition duration-300 ease-in-out sm:px-4 ${
-              currentUser
+            <button
+              type="button"
+              onClick={() => handleAuthToggle("login")}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-semibold transition duration-300 ease-in-out sm:px-4 ${
+              currentUser || showWorkspacePreview
                 ? "text-slate-200 hover:bg-white/8 hover:text-white"
                 : "bg-cyan-300 text-slate-950 shadow-[0_0_30px_rgba(0,229,255,0.28)]"
             }`}
@@ -93,6 +95,8 @@ function App() {
 
       {currentUser ? (
         <Home currentUser={currentUser} onLogout={() => setCurrentUser(null)} />
+      ) : showWorkspacePreview ? (
+        <Home />
       ) : (
         <>
           {authView === "login" ? (
