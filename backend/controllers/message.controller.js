@@ -49,3 +49,28 @@ export const sendMessage = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const getMessages = async (req, res) => {
+  try {
+    const { id: userToChatId } = req.params;
+    const senderId = req.user?._id;
+
+    if (!senderId) {
+      return res.status(401).json({ error: "Unauthorized access" });
+    }
+
+    // Find the shared conversation first, then populate the stored message references in order.
+    const conversation = await Conversation.findOne({
+      participants: { $all: [senderId, userToChatId] },
+    }).populate("message");
+
+    if (!conversation) {
+      return res.status(200).json([]);
+    }
+
+    return res.status(200).json(conversation.message);
+  } catch (error) {
+    console.log("Error in getMessages controller", error.message);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};

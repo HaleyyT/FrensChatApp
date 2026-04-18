@@ -1,4 +1,4 @@
-import jwt, { decode } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import User from '../models/user.models.js';
 
 const protectRoutes = async (req, res, next) => {
@@ -9,7 +9,8 @@ const protectRoutes = async (req, res, next) => {
         }
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        if (!decode) {
+        // Keep the success path explicit so later edits still require a userId from the token payload.
+        if (!decoded?.userId) {
             return res.status(401).json({ error: "Unauthorised access - Invalid token" });
         }
         const user = await User.findById(decoded.userId).select("-password");
@@ -18,11 +19,10 @@ const protectRoutes = async (req, res, next) => {
             return res.status(401).json({ error: "Unauthorised access - User not found" });
         }
 
-        // Attach user to request object 
+        // Attach the safe user object once so downstream controllers can trust the auth context.
         req.user = user;
         req.userId = decoded.userId;
 
-        // call next middleware which call sendMessage controller
         next();
 
     } catch (error) {
