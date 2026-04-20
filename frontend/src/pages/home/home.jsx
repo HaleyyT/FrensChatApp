@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { getMessages, getUsers, logout } from "../../lib/api";
+import { getMessages, getUsers, logout, sendMessage } from "../../lib/api";
 
 const conversations = [
   {
@@ -60,6 +60,8 @@ function Home({ currentUser, onLogout }) {
   const [liveMessages, setLiveMessages] = useState([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [draftMessage, setDraftMessage] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
 
   useEffect(() => {
     if (isPreviewMode) {
@@ -145,6 +147,28 @@ function Home({ currentUser, onLogout }) {
       onLogout();
     } catch (error) {
       console.error("Error logging out", error);
+    }
+  }
+
+  async function handleSendMessage() {
+    const trimmedMessage = draftMessage.trim();
+
+    if (isPreviewMode || !selectedUserId || !trimmedMessage) {
+      return;
+    }
+
+    setIsSendingMessage(true);
+
+    try {
+      const newMessage = await sendMessage(selectedUserId, trimmedMessage);
+
+      // Add the saved message immediately so the chat feels responsive without waiting for a reload.
+      setLiveMessages((currentMessages) => [...currentMessages, newMessage]);
+      setDraftMessage("");
+    } catch (error) {
+      console.error("Error sending message", error);
+    } finally {
+      setIsSendingMessage(false);
     }
   }
 
@@ -338,12 +362,26 @@ function Home({ currentUser, onLogout }) {
                     <label className="flex-1">
                       <span className="sr-only">Message</span>
                       <textarea
+                        value={isPreviewMode ? "" : draftMessage}
+                        onChange={(event) => setDraftMessage(event.target.value)}
+                        disabled={isPreviewMode || !selectedUserId || isSendingMessage}
                         className="min-h-[108px] w-full resize-none rounded-[20px] border border-white/12 bg-white/7 px-4 py-3.5 text-sm font-medium text-white outline-none transition duration-300 ease-in-out placeholder:text-slate-400 focus:border-cyan-300/50 focus:bg-white/10 focus:shadow-[0_0_0_1px_rgba(0,229,255,0.12)]"
-                        placeholder="Draft a refined response, gather client notes, or start a new conversation..."
+                        placeholder={
+                          isPreviewMode
+                            ? "Log in to start sending live messages..."
+                            : selectedUserId
+                              ? "Write a message and send it to this conversation..."
+                              : "Choose a conversation before sending a message..."
+                        }
                       />
                     </label>
-                    <button className="rounded-[20px] bg-[#00E5FF] px-5 py-3.5 font-semibold text-slate-950 transition duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-cyan-200 hover:shadow-[0_0_28px_rgba(0,229,255,0.3)]">
-                      Send Message
+                    <button
+                      type="button"
+                      onClick={handleSendMessage}
+                      disabled={isPreviewMode || !selectedUserId || !draftMessage.trim() || isSendingMessage}
+                      className="rounded-[20px] bg-[#00E5FF] px-5 py-3.5 font-semibold text-slate-950 transition duration-300 ease-in-out hover:-translate-y-0.5 hover:bg-cyan-200 hover:shadow-[0_0_28px_rgba(0,229,255,0.3)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:bg-[#00E5FF] disabled:hover:shadow-none"
+                    >
+                      {isSendingMessage ? "Sending..." : "Send Message"}
                     </button>
                   </div>
 
