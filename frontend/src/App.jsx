@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 import "./App.css";
 import Home from "./pages/home/home";
 import Login from "./pages/login/login";
 import SignUp from "./pages/signup/signUp";
-import { getCurrentUser, logout } from "./lib/api";
+import { getCurrentUser, logout, SOCKET_SERVER_URL } from "./lib/api";
 
 function App() {
   // Keep the authenticated user at the app level so every screen can react to login/logout.
@@ -11,6 +12,8 @@ function App() {
   const [authView, setAuthView] = useState("login");
   const [showWorkspacePreview, setShowWorkspacePreview] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [socket, setSocket] = useState(null);
+  const [onlineUserIds, setOnlineUserIds] = useState([]);
 
   useEffect(() => {
     async function restoreSession() {
@@ -27,6 +30,38 @@ function App() {
     // Ask the backend if the browser still has a valid auth cookie after refresh.
     restoreSession();
   }, []);
+
+  useEffect(() => {
+    if (!currentUser?._id) {
+      setOnlineUserIds([]);
+      setSocket((currentSocket) => {
+        currentSocket?.disconnect();
+        return null;
+      });
+      return;
+    }
+
+    // Open one socket connection for the signed-in user so the workspace can receive live events.
+    const nextSocket = io(SOCKET_SERVER_URL, {
+      query: {
+        userId: currentUser._id,
+      },
+      withCredentials: true,
+    });
+
+    nextSocket.on("onlineUsers", (userIds) => {
+      setOnlineUserIds(userIds);
+    });
+
+    setSocket(nextSocket);
+
+    return () => {
+      nextSocket.off("onlineUsers");
+      nextSocket.disconnect();
+      setOnlineUserIds([]);
+      setSocket(null);
+    };
+  }, [currentUser]);
 
   async function handleAuthToggle(nextView) {
     if (nextView === "workspace") {
@@ -94,7 +129,12 @@ function App() {
       </div>
 
       {currentUser ? (
-        <Home currentUser={currentUser} onLogout={() => setCurrentUser(null)} />
+        <Home
+          currentUser={currentUser}
+          onLogout={() => setCurrentUser(null)}
+          socket={socket}
+          onlineUserIds={onlineUserIds}
+        />
       ) : showWorkspacePreview ? (
         <Home />
       ) : (

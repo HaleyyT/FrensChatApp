@@ -1,5 +1,6 @@
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
+import { getIO } from "../socket/socket.js";
 
 export const sendMessage = async (req, res) => {
   try {
@@ -42,6 +43,11 @@ export const sendMessage = async (req, res) => {
     // Link message into conversation (match your schema field name!)
     conversation.message.push(newMessage._id);
     await conversation.save();
+
+    const realtimeMessage = newMessage.toObject();
+
+    // Keep the HTTP endpoint as the source of truth, then notify the receiver in realtime.
+    getIO().to(receiverId.toString()).emit("newMessage", realtimeMessage);
 
     return res.status(201).json(newMessage);
   } catch (error) {
