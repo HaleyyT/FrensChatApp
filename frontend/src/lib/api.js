@@ -46,6 +46,13 @@ export function getMessages(userId) {
   return apiRequest(`/message/${userId}`);
 }
 
+export function sendMessage(userId, message) {
+  return apiRequest(`/message/send/${userId}`, {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  });
+}
+
 export function logout() {
   return apiRequest("/auth/logout", {
     method: "POST",
