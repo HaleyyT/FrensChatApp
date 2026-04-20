@@ -6,18 +6,23 @@ A full-stack chat application focused on building production-style authenticatio
 
 ## Current Milestone 
 
-Auth API is working end-to-end with:
+Auth and the first realtime chat flow are working end-to-end with:
 
 - signup
 - login
 - logout
 - hashed passwords
 - JWT stored in `HttpOnly` cookies
+- sidebar user loading
+- conversation history loading
+- HTTP message sending
+- Socket.IO realtime message delivery
+- live online presence updates
 
 ## Stack
 
-- Frontend: React (Vite), Tailwind CSS, daisyUI
-- Backend: Node.js, Express
+- Frontend: React (Vite), Tailwind CSS, daisyUI, Socket.IO client
+- Backend: Node.js, Express, Socket.IO
 - Database: MongoDB Atlas, Mongoose
 - Auth: JWT, bcryptjs, cookie-based sessions
 
@@ -78,13 +83,16 @@ This project is built to practice real engineering skills:
 - MongoDB connection through environment variables
 - JSON request parsing enabled with `express.json()`
 - Protected route middleware for authenticated requests
-- Message and conversation models started for chat functionality
+- Message and conversation models powering chat persistence
+- Socket.IO attached to the same HTTP server as Express
 
 ### Frontend Progress
 
 - Cinematic dark workspace UI
 - Matching luxury dark login screen
 - Laptop-sized layout polished for real browser use
+- Workspace connected to live users, history, and realtime incoming messages
+- Online presence badges in the conversation list
 
 ## API Endpoints
 
@@ -95,7 +103,8 @@ Base URL (local): `http://localhost:5000`
 | POST | `/api/auth/signup` | Create account and set JWT cookie |
 | POST | `/api/auth/login` | Login and set JWT cookie |
 | POST | `/api/auth/logout` | Logout and clear JWT cookie |
-| GET | `/api/users/` | Get users for sidebar (protected) |
+| GET | `/api/user/` | Get users for sidebar (protected) |
+| GET | `/api/message/:id` | Get shared conversation history with a user (protected) |
 | POST | `/api/message/send/:id` | Send message to a user by id (protected) |
 
 ## Project Structure
@@ -237,15 +246,12 @@ Look for:
 
 ### In Progress
 
-- Connecting the frontend UI to live backend actions
 - Improving mobile-specific layout and spacing
-- Building out conversation and message flows
+- Typing indicators
+- Hardening error states and empty states
 
 ### Planned
 
-- Full conversation history
-- Socket.io real-time messaging
-- Online presence and typing indicators
 - Pagination for chat history
 - Better validation and error states
 - Deployment

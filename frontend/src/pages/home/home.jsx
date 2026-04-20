@@ -49,7 +49,7 @@ const sharedFiles = [
   { name: "Client recap.docx", type: "Document", size: "1 MB" },
 ];
 
-function Home({ currentUser, onLogout }) {
+function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
   const displayUser = currentUser || {
     fullName: "Haley Tran",
     username: "haleytran",
@@ -62,6 +62,7 @@ function Home({ currentUser, onLogout }) {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [draftMessage, setDraftMessage] = useState("");
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [sendError, setSendError] = useState("");
 
   useEffect(() => {
     if (isPreviewMode) {
@@ -113,7 +114,39 @@ function Home({ currentUser, onLogout }) {
     loadMessages();
   }, [isPreviewMode, selectedUserId]);
 
+  useEffect(() => {
+    if (isPreviewMode || !socket || !selectedUserId || !currentUser?._id) {
+      return;
+    }
+
+    function handleIncomingMessage(newMessage) {
+      const belongsToSelectedConversation =
+        newMessage.senderId === selectedUserId && newMessage.receiverId === currentUser._id;
+
+      if (!belongsToSelectedConversation) {
+        return;
+      }
+
+      // Guard against duplicate inserts if the same event is replayed after a reconnect.
+      setLiveMessages((currentMessages) => {
+        if (currentMessages.some((message) => message._id === newMessage._id)) {
+          return currentMessages;
+        }
+
+        return [...currentMessages, newMessage];
+      });
+    }
+
+    socket.on("newMessage", handleIncomingMessage);
+
+    return () => {
+      socket.off("newMessage", handleIncomingMessage);
+    };
+  }, [currentUser, isPreviewMode, selectedUserId, socket]);
+
   const selectedUser = users.find((user) => user._id === selectedUserId) || null;
+  const onlineUserSet = new Set(onlineUserIds);
+  const selectedUserIsOnline = selectedUser ? onlineUserSet.has(selectedUser._id) : false;
   const sidebarItems = isPreviewMode
     ? conversations
     : users.map((user) => ({
@@ -122,6 +155,7 @@ function Home({ currentUser, onLogout }) {
         preview: `@${user.username}`,
         time: "",
         active: user._id === selectedUserId,
+        isOnline: onlineUserSet.has(user._id),
       }));
   const activeConversationTitle = isPreviewMode
     ? "Design Review"
@@ -129,7 +163,7 @@ function Home({ currentUser, onLogout }) {
   const activeConversationSubtitle = isPreviewMode
     ? "Cinematic dark mode with better usability for longer working sessions."
     : selectedUser
-      ? `Conversation with @${selectedUser.username}`
+      ? `${selectedUserIsOnline ? "Online now" : "Offline"} with @${selectedUser.username}`
       : "Choose someone from the sidebar to load real messages.";
   const renderedMessages = isPreviewMode
     ? messages
@@ -157,6 +191,7 @@ function Home({ currentUser, onLogout }) {
       return;
     }
 
+    setSendError("");
     setIsSendingMessage(true);
 
     try {
@@ -167,6 +202,7 @@ function Home({ currentUser, onLogout }) {
       setDraftMessage("");
     } catch (error) {
       console.error("Error sending message", error);
+      setSendError(error.message);
     } finally {
       setIsSendingMessage(false);
     }
@@ -247,7 +283,12 @@ function Home({ currentUser, onLogout }) {
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-semibold text-white">{conversation.name}</p>
+                    <div className="flex items-center gap-2">
+                      {!isPreviewMode && conversation.isOnline ? (
+                        <span className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.9)]" />
+                      ) : null}
+                      <p className="font-semibold text-white">{conversation.name}</p>
+                    </div>
                     <div className="flex items-center gap-2">
                       {conversation.unread ? (
                         <span className="rounded-full bg-cyan-300 px-2 py-0.5 text-[11px] font-bold text-slate-950">
@@ -259,6 +300,11 @@ function Home({ currentUser, onLogout }) {
                       ) : null}
                     </div>
                   </div>
+                  {!isPreviewMode ? (
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      {conversation.isOnline ? "Online" : "Offline"}
+                    </p>
+                  ) : null}
                   <p className="mt-2 text-sm font-medium leading-6 text-slate-200">
                     {conversation.preview}
                   </p>
@@ -385,6 +431,12 @@ function Home({ currentUser, onLogout }) {
                     </button>
                   </div>
 
+                  {sendError ? (
+                    <div className="mt-3 rounded-[18px] border border-rose-300/20 bg-rose-400/10 px-4 py-3 text-sm font-medium text-rose-100">
+                      {sendError}
+                    </div>
+                  ) : null}
+
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-2">
                     <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
                       <span className="rounded-full border border-white/12 px-3 py-1">
@@ -474,6 +526,11 @@ Home.propTypes = {
     username: PropTypes.string.isRequired,
   }),
   onLogout: PropTypes.func,
+  socket: PropTypes.shape({
+    on: PropTypes.func,
+    off: PropTypes.func,
+  }),
+  onlineUserIds: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default Home;
