@@ -3,7 +3,7 @@ import "./App.css";
 import Home from "./pages/home/home";
 import Login from "./pages/login/login";
 import SignUp from "./pages/signup/signUp";
-import { SocketProvider } from "./context/SocketContext";
+import { SocketProvider } from "./context/SocketProvider";
 import { getCurrentUser, logout } from "./lib/api";
 
 function App() {
