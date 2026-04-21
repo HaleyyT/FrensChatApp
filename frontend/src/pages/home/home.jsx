@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { getMessages, getUsers, logout, sendMessage } from "../../lib/api";
 
@@ -49,6 +49,17 @@ const sharedFiles = [
   { name: "Client recap.docx", type: "Document", size: "1 MB" },
 ];
 
+function formatMessageTime(timestamp) {
+  if (!timestamp) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-AU", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(timestamp));
+}
+
 function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
   const displayUser = currentUser || {
     fullName: "Haley Tran",
@@ -63,6 +74,8 @@ function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
   const [draftMessage, setDraftMessage] = useState("");
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [unreadCounts, setUnreadCounts] = useState({});
+  const messageEndRef = useRef(null);
 
   useEffect(() => {
     if (isPreviewMode) {
@@ -115,15 +128,33 @@ function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
   }, [isPreviewMode, selectedUserId]);
 
   useEffect(() => {
-    if (isPreviewMode || !socket || !selectedUserId || !currentUser?._id) {
+    if (isPreviewMode || !selectedUserId) {
+      return;
+    }
+
+    // Opening a conversation means the visible history has been read, so clear its sidebar badge.
+    setUnreadCounts((currentCounts) => ({
+      ...currentCounts,
+      [selectedUserId]: 0,
+    }));
+  }, [isPreviewMode, selectedUserId]);
+
+  useEffect(() => {
+    if (isPreviewMode || !socket || !currentUser?._id) {
       return;
     }
 
     function handleIncomingMessage(newMessage) {
+      const senderId = newMessage.senderId;
       const belongsToSelectedConversation =
-        newMessage.senderId === selectedUserId && newMessage.receiverId === currentUser._id;
+        senderId === selectedUserId && newMessage.receiverId === currentUser._id;
 
       if (!belongsToSelectedConversation) {
+        // Keep unread state local to the sidebar until we add a backend read-receipt model later.
+        setUnreadCounts((currentCounts) => ({
+          ...currentCounts,
+          [senderId]: (currentCounts[senderId] || 0) + 1,
+        }));
         return;
       }
 
@@ -144,6 +175,15 @@ function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
     };
   }, [currentUser, isPreviewMode, selectedUserId, socket]);
 
+  useEffect(() => {
+    if (isPreviewMode) {
+      return;
+    }
+
+    // Keep the latest message in view after history loads, sends complete, or realtime events arrive.
+    messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [isPreviewMode, liveMessages]);
+
   const selectedUser = users.find((user) => user._id === selectedUserId) || null;
   const onlineUserSet = new Set(onlineUserIds);
   const selectedUserIsOnline = selectedUser ? onlineUserSet.has(selectedUser._id) : false;
@@ -156,6 +196,7 @@ function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
         time: "",
         active: user._id === selectedUserId,
         isOnline: onlineUserSet.has(user._id),
+        unread: unreadCounts[user._id] || 0,
       }));
   const activeConversationTitle = isPreviewMode
     ? "Design Review"
@@ -173,6 +214,7 @@ function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
         role: message.senderId === currentUser?._id ? "Project Owner" : "Conversation",
         text: message.message,
         isUser: message.senderId === currentUser?._id,
+        time: formatMessageTime(message.createdAt),
       }));
 
   async function handleLogout() {
@@ -206,6 +248,15 @@ function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
     } finally {
       setIsSendingMessage(false);
     }
+  }
+
+  function handleComposerKeyDown(event) {
+    if (event.key !== "Enter" || event.shiftKey) {
+      return;
+    }
+
+    event.preventDefault();
+    handleSendMessage();
   }
 
   return (
@@ -387,6 +438,11 @@ function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
                         <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">
                           {message.role}
                         </span>
+                        {message.time ? (
+                          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            {message.time}
+                          </span>
+                        ) : null}
                       </div>
                       <p className="text-sm font-medium leading-7 text-slate-100/95">
                         {message.text}
@@ -400,6 +456,7 @@ function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
                     No messages yet. Start the conversation to populate this panel with live chat history.
                   </div>
                 )}
+                <div ref={messageEndRef} />
               </div>
 
               <div className="mt-auto pt-7">
@@ -410,6 +467,7 @@ function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
                       <textarea
                         value={isPreviewMode ? "" : draftMessage}
                         onChange={(event) => setDraftMessage(event.target.value)}
+                        onKeyDown={handleComposerKeyDown}
                         disabled={isPreviewMode || !selectedUserId || isSendingMessage}
                         className="min-h-[108px] w-full resize-none rounded-[20px] border border-white/12 bg-white/7 px-4 py-3.5 text-sm font-medium text-white outline-none transition duration-300 ease-in-out placeholder:text-slate-400 focus:border-cyan-300/50 focus:bg-white/10 focus:shadow-[0_0_0_1px_rgba(0,229,255,0.12)]"
                         placeholder={
@@ -450,7 +508,7 @@ function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
                       </span>
                     </div>
                     <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
-                      Live draft
+                      Enter sends / Shift + Enter adds a line
                     </p>
                   </div>
                 </div>
