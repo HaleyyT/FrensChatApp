@@ -35,6 +35,23 @@ export function attachSocketServer(server, clientUrl) {
     onlineUserCounts.set(userId, nextConnectionCount);
     broadcastOnlineUsers();
 
+    socket.on("typing", ({ receiverId } = {}) => {
+      if (!receiverId) {
+        return;
+      }
+
+      // Forward typing state only to the intended receiver, not the whole socket server.
+      io.to(receiverId).emit("typing", { senderId: userId });
+    });
+
+    socket.on("stopTyping", ({ receiverId } = {}) => {
+      if (!receiverId) {
+        return;
+      }
+
+      io.to(receiverId).emit("stopTyping", { senderId: userId });
+    });
+
     socket.on("disconnect", () => {
       const currentConnectionCount = onlineUserCounts.get(userId) || 0;
 

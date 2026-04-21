@@ -77,7 +77,9 @@ function Home({ currentUser, onLogout }) {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [sendError, setSendError] = useState("");
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [typingUserIds, setTypingUserIds] = useState([]);
   const messageEndRef = useRef(null);
+  const stopTypingTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (isPreviewMode) {
@@ -168,6 +170,7 @@ function Home({ currentUser, onLogout }) {
 
         return [...currentMessages, newMessage];
       });
+      setTypingUserIds((currentIds) => currentIds.filter((id) => id !== senderId));
     }
 
     socket.on("newMessage", handleIncomingMessage);
@@ -176,6 +179,40 @@ function Home({ currentUser, onLogout }) {
       socket.off("newMessage", handleIncomingMessage);
     };
   }, [currentUser, isPreviewMode, selectedUserId, socket]);
+
+  useEffect(() => {
+    if (isPreviewMode || !socket) {
+      return;
+    }
+
+    function handleTyping({ senderId }) {
+      setTypingUserIds((currentIds) => {
+        if (currentIds.includes(senderId)) {
+          return currentIds;
+        }
+
+        return [...currentIds, senderId];
+      });
+    }
+
+    function handleStopTyping({ senderId }) {
+      setTypingUserIds((currentIds) => currentIds.filter((id) => id !== senderId));
+    }
+
+    socket.on("typing", handleTyping);
+    socket.on("stopTyping", handleStopTyping);
+
+    return () => {
+      socket.off("typing", handleTyping);
+      socket.off("stopTyping", handleStopTyping);
+    };
+  }, [isPreviewMode, socket]);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(stopTypingTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (isPreviewMode) {
@@ -189,6 +226,7 @@ function Home({ currentUser, onLogout }) {
   const selectedUser = users.find((user) => user._id === selectedUserId) || null;
   const onlineUserSet = new Set(onlineUserIds);
   const selectedUserIsOnline = selectedUser ? onlineUserSet.has(selectedUser._id) : false;
+  const selectedUserIsTyping = selectedUser ? typingUserIds.includes(selectedUser._id) : false;
   const sidebarItems = isPreviewMode
     ? conversations
     : users.map((user) => ({
@@ -239,6 +277,9 @@ function Home({ currentUser, onLogout }) {
     setIsSendingMessage(true);
 
     try {
+      socket?.emit("stopTyping", { receiverId: selectedUserId });
+      clearTimeout(stopTypingTimeoutRef.current);
+
       const newMessage = await sendMessage(selectedUserId, trimmedMessage);
 
       // Add the saved message immediately so the chat feels responsive without waiting for a reload.
@@ -259,6 +300,30 @@ function Home({ currentUser, onLogout }) {
 
     event.preventDefault();
     handleSendMessage();
+  }
+
+  function handleDraftChange(event) {
+    const nextMessage = event.target.value;
+
+    setDraftMessage(nextMessage);
+
+    if (isPreviewMode || !socket || !selectedUserId) {
+      return;
+    }
+
+    clearTimeout(stopTypingTimeoutRef.current);
+
+    if (!nextMessage.trim()) {
+      socket.emit("stopTyping", { receiverId: selectedUserId });
+      return;
+    }
+
+    socket.emit("typing", { receiverId: selectedUserId });
+
+    // Delay stopTyping slightly so the indicator feels natural while someone pauses between words.
+    stopTypingTimeoutRef.current = setTimeout(() => {
+      socket.emit("stopTyping", { receiverId: selectedUserId });
+    }, 1200);
   }
 
   return (
@@ -389,6 +454,11 @@ function Home({ currentUser, onLogout }) {
               <p className="mt-2 text-sm font-medium text-slate-300">
                 {activeConversationSubtitle}
               </p>
+              {selectedUserIsTyping ? (
+                <p className="mt-2 text-sm font-semibold text-cyan-100">
+                  {selectedUser.fullName} is typing...
+                </p>
+              ) : null}
             </div>
 
             <div className="flex w-full flex-wrap gap-3 md:w-auto">
@@ -468,7 +538,7 @@ function Home({ currentUser, onLogout }) {
                       <span className="sr-only">Message</span>
                       <textarea
                         value={isPreviewMode ? "" : draftMessage}
-                        onChange={(event) => setDraftMessage(event.target.value)}
+                        onChange={handleDraftChange}
                         onKeyDown={handleComposerKeyDown}
                         disabled={isPreviewMode || !selectedUserId || isSendingMessage}
                         className="min-h-[108px] w-full resize-none rounded-[20px] border border-white/12 bg-white/7 px-4 py-3.5 text-sm font-medium text-white outline-none transition duration-300 ease-in-out placeholder:text-slate-400 focus:border-cyan-300/50 focus:bg-white/10 focus:shadow-[0_0_0_1px_rgba(0,229,255,0.12)]"
