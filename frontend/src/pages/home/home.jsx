@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { getMessages, getUsers, logout, sendMessage } from "../../lib/api";
+import useSocket from "../../context/useSocket";
 
 const conversations = [
   {
@@ -60,7 +61,8 @@ function formatMessageTime(timestamp) {
   }).format(new Date(timestamp));
 }
 
-function Home({ currentUser, onLogout, socket, onlineUserIds = [] }) {
+function Home({ currentUser, onLogout }) {
+  const { socket, onlineUserIds } = useSocket();
   const displayUser = currentUser || {
     fullName: "Haley Tran",
     username: "haleytran",
@@ -584,11 +586,6 @@ Home.propTypes = {
     username: PropTypes.string.isRequired,
   }),
   onLogout: PropTypes.func,
-  socket: PropTypes.shape({
-    on: PropTypes.func,
-    off: PropTypes.func,
-  }),
-  onlineUserIds: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default Home;
