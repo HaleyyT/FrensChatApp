@@ -1,4 +1,4 @@
-# Realtime Chat App (Full-stack) — In Progress
+# Real-Time Chat App (Full-stack) — In Progress
 
 A full-stack chat application focused on building production-style authentication and a clean, scalable backend foundation for real-time messaging.
 
@@ -6,7 +6,7 @@ A full-stack chat application focused on building production-style authenticatio
 
 ## Current Milestone 
 
-Auth and the first realtime chat flow are working end-to-end with:
+Auth and the real-time chat flow are working end-to-end with:
 
 - signup
 - login
@@ -16,8 +16,12 @@ Auth and the first realtime chat flow are working end-to-end with:
 - sidebar user loading
 - conversation history loading
 - HTTP message sending
-- Socket.IO realtime message delivery
+- Socket.IO event-driven real-time message delivery
 - live online presence updates
+- typing indicators
+- unread counts for inactive conversations
+- timestamps, auto-scroll, and Enter-to-send composer UX
+- instant UI updates across active user sessions
 
 ## Stack
 
@@ -51,7 +55,9 @@ This project is built to practice real engineering skills:
 - `backend/routes/message.routes.js`
   Includes protected message sending.
 - `backend/controllers/message.controller.js`
-  Creates messages and links them to conversations.
+  Creates messages, links them to conversations, and emits real-time message events after persistence.
+- `backend/socket/socket.js`
+  Attaches Socket.IO, tracks online users, joins each user to their own room, and relays typing events.
 - `backend/models/user.models.js`
   Stores user account data.
 - `backend/models/conversation.model.js`
@@ -85,14 +91,16 @@ This project is built to practice real engineering skills:
 - Protected route middleware for authenticated requests
 - Message and conversation models powering chat persistence
 - Socket.IO attached to the same HTTP server as Express
+- Event-driven message delivery reduces the need for repeated HTTP polling
 
 ### Frontend Progress
 
 - Cinematic dark workspace UI
 - Matching luxury dark login screen
 - Laptop-sized layout polished for real browser use
-- Workspace connected to live users, history, and realtime incoming messages
+- Workspace connected to live users, history, and real-time incoming messages
 - Online presence badges in the conversation list
+- Low-latency chat experience with instant message updates, typing indicators, unread counts, and auto-scroll
 
 ## API Endpoints
 
@@ -127,6 +135,8 @@ backend/
     auth.routes.js
     message.routes.js
     user.routes.js
+  socket/
+    socket.js
   utils/
     generateToken.js
   server.js
@@ -138,6 +148,10 @@ frontend/
       home/
       login/
       signup/
+    context/
+      SocketProvider.jsx
+      socketContext.js
+      useSocket.js
     App.jsx
     index.css
     main.jsx
@@ -197,6 +211,36 @@ Frontend usually runs on `http://localhost:5173`
 
 ## How To Use / Test
 
+### Browser flow
+
+Most people should use the browser UI to sign up, log in, and chat. Curl is only included below for optional backend API checks.
+
+1. Start the backend with `npm run server`.
+2. Start the frontend with `cd frontend` then `npm run dev`.
+3. Open `http://localhost:5173`.
+4. Create an account or log in through the UI.
+5. Create or log in to a second account from a separate browser session.
+6. Select the other user in each sidebar, then send messages to test live delivery.
+
+**Important:** use two separate browser sessions for two logged-in users because JWT auth is stored in an `HttpOnly` cookie for `localhost`. Two standard tabs in the same browser profile share the same cookie, so the most recent login will replace the earlier login for that browser profile. If both tabs are from the same profile, they may look like two users visually, but API requests will belong to the most recently logged-in account.
+
+**Recommended local real-time test options:**
+
+- Chrome standard window for User A and Chrome incognito for User B
+- Chrome for User A and Safari/Firefox/Edge for User B
+- Two separate Chrome profiles
+
+Expected real-time behaviour:
+
+- New messages appear immediately in the receiver's active conversation without refreshing.
+- The receiver can see typing feedback while the sender is composing.
+- Inactive conversations show unread badges when real-time messages arrive.
+- Online users show presence indicators in the sidebar.
+
+### Optional API checks
+
+Curl is useful for checking the backend directly, but it is not required for normal app usage.
+
 ### Signup
 
 ```bash
@@ -241,13 +285,19 @@ Look for:
 - Password hashing
 - Protected route middleware
 - Sidebar user fetching
-- Message sending foundation
+- Persistent conversation history
+- HTTP message sending
+- Socket.IO real-time message delivery
+- Online presence
+- Typing indicators
+- Unread counts for inactive conversations
+- Message timestamps, auto-scroll, and Enter-to-send
+- Shared socket state through a frontend socket context/provider
 - Polished workspace and login UI
 
 ### In Progress
 
 - Improving mobile-specific layout and spacing
-- Typing indicators
 - Hardening error states and empty states
 
 ### Planned
