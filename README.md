@@ -81,6 +81,9 @@ This project is built to practice real engineering skills:
 - `SameSite=Lax` locally and `SameSite=None; Secure` in production for deployed frontend/backend origins
 - `Secure` cookie flag enabled automatically outside development
 - Basic message validation for receiver id, receiver existence, blank messages, and maximum message length
+- Helmet security headers on the backend API
+- Rate limits on auth and message endpoints to reduce brute-force and spam risk
+- Vercel frontend security headers, including a Content Security Policy for script-injection protection
 
 ### Backend Foundation
 
@@ -254,6 +257,7 @@ Deployment checklist:
 - Confirm MongoDB Atlas allows the deployed backend to connect.
 - Use `NODE_ENV=production` so auth cookies are sent with `SameSite=None; Secure` for cross-site frontend/backend deployments.
 - Redeploy the frontend after changing any `VITE_*` environment variables.
+- If the backend host is known, tighten `frontend/vercel.json` `connect-src` from broad `https: wss:` to the exact backend HTTPS and WSS origins.
 
 ## How To Use / Test
 
@@ -358,3 +362,4 @@ Look for:
 - In production, cookies use `Secure=true` and `SameSite=None` so the deployed frontend can call the deployed backend with credentials over HTTPS.
 - JWT is intentionally stored in cookies instead of `localStorage`.
 - Protected routes depend on the auth cookie being sent with the request.
+- React renders message text as escaped text rather than raw HTML; avoid adding `dangerouslySetInnerHTML` unless content sanitisation is introduced first.

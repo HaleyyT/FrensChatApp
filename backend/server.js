@@ -8,6 +8,8 @@ import connectToMongoDB from "./db/connectToMongoDB.js";
 import userRoutes from "./routes/user.routes.js";
 import cors from "cors";
 import { attachSocketServer } from "./socket/socket.js";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 // Load environment variables before reading config such as PORT or CLIENT_URL.
 dotenv.config();
@@ -18,6 +20,9 @@ const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 const allowedOrigins = CLIENT_URL.split(",").map((origin) => origin.trim());
 const server = http.createServer(app);
 
+app.set("trust proxy", 1);
+
+app.use(helmet());
 app.use(express.json()); 
 app.use(cookieParser());
 
@@ -25,6 +30,24 @@ app.use(cors({
   origin: allowedOrigins,
   credentials: true,
 }));
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 50,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const messageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Keep public endpoints responsive while slowing brute-force login and message spam attempts.
+app.use("/api/auth", authLimiter);
+app.use("/api/message", messageLimiter);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/message", messageRoutes);
