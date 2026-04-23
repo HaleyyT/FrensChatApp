@@ -11,10 +11,10 @@ function broadcastOnlineUsers() {
   io.emit("onlineUsers", Array.from(onlineUserCounts.keys()));
 }
 
-export function attachSocketServer(server, clientUrl) {
+export function attachSocketServer(server, allowedOrigins) {
   io = new Server(server, {
     cors: {
-      origin: clientUrl,
+      origin: allowedOrigins,
       credentials: true,
     },
   });

@@ -15,13 +15,14 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+const allowedOrigins = CLIENT_URL.split(",").map((origin) => origin.trim());
 const server = http.createServer(app);
 
 app.use(express.json()); 
 app.use(cookieParser());
 
 app.use(cors({
-  origin: CLIENT_URL,
+  origin: allowedOrigins,
   credentials: true,
 }));
 
@@ -34,7 +35,7 @@ app.get("/", (req, res) => {
 });
 
 // Attach Socket.IO to the same HTTP server so REST and realtime events share one backend entry point.
-attachSocketServer(server, CLIENT_URL);
+attachSocketServer(server, allowedOrigins);
 
 async function start() {
   try {

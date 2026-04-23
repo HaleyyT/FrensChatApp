@@ -1,6 +1,7 @@
 import User from '../models/user.models.js';
 import bcrypt from "bcryptjs";
 import generateTokenAndSetCookie from '../utils/generateToken.js';
+import { getAuthCookieOptions } from '../utils/cookieOptions.js';
 
 export const signup = async (req, res) => {
     try {
@@ -93,11 +94,7 @@ export const logout = async (req, res) => {
     //clear the jwt cookie by overwriting it with an empty value and expiring it immediately (maxAge: 0).
     try {
         res.cookie("jwt", "", {
-            maxAge: 0,
-            httpOnly: true,
-            sameSite: "strict",
-            secure: process.env.NODE_ENV !== "development",
-            path: "/",
+            ...getAuthCookieOptions(0),
         });
         res.status(200).json({message: "Logged out successfully"});
     } catch (error) {
