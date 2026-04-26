@@ -8,9 +8,7 @@ A full-stack chat application focused on building production-style authenticatio
 
 Auth and the real-time chat flow are working end-to-end with:
 
-- signup
-- login
-- logout
+- signup, login, logout
 - hashed passwords
 - JWT stored in `HttpOnly` cookies
 - sidebar user loading
@@ -80,8 +78,12 @@ This project is built to practice real engineering skills:
 - Password hashing with `bcryptjs`
 - JWT stored in cookies instead of `localStorage`
 - `HttpOnly` cookie flag to reduce token theft through XSS
-- `SameSite=Strict` cookie setting to help protect against CSRF in many cases
+- `SameSite=Lax` locally and `SameSite=None; Secure` in production for deployed frontend/backend origins
 - `Secure` cookie flag enabled automatically outside development
+- Basic message validation for receiver id, receiver existence, blank messages, and maximum message length
+- Helmet security headers on the backend API
+- Rate limits on auth and message endpoints to reduce brute-force and spam risk
+- Vercel frontend security headers, including a Content Security Policy for script-injection protection
 
 ### Backend Foundation
 
@@ -189,7 +191,18 @@ JWT_SECRET=your_secret
 You can copy from `.env.example`.
 Never commit your real `.env` file or paste live secrets into the repository.
 
-### 3. Run the backend
+### 3. Create frontend env values
+
+Create `frontend/.env`:
+
+```bash
+VITE_API_BASE_URL=http://localhost:5000/api
+VITE_SOCKET_SERVER_URL=http://localhost:5000
+```
+
+You can copy from `frontend/.env.example`.
+
+### 4. Run the backend
 
 ```bash
 npm run server
@@ -200,7 +213,7 @@ You should see logs like:
 - `Connected to mongoDB`
 - `Server running on port 5000`
 
-### 4. Run the frontend
+### 5. Run the frontend
 
 ```bash
 cd frontend
@@ -208,6 +221,43 @@ npm run dev
 ```
 
 Frontend usually runs on `http://localhost:5173`
+
+## Deployment Notes
+
+Recommended hosting split:
+
+- Frontend: Vercel
+- Backend: Render, Railway, Fly.io, or another long-running Node host with WebSocket support
+- Database: MongoDB Atlas
+
+Vercel is a good fit for the React/Vite frontend. The Socket.IO backend should run on a long-running Node server because WebSocket connections need a persistent process.
+
+Backend environment variables:
+
+```bash
+PORT=5000
+CLIENT_URL=https://your-frontend.vercel.app
+NODE_ENV=production
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_long_random_secret
+```
+
+Frontend environment variables:
+
+```bash
+VITE_API_BASE_URL=https://your-backend-host.com/api
+VITE_SOCKET_SERVER_URL=https://your-backend-host.com
+```
+
+Deployment checklist:
+
+- Set `CLIENT_URL` to the deployed frontend origin exactly.
+- Set the frontend `VITE_*` variables to the deployed backend origin.
+- Keep `.env` files out of Git; use the host dashboard for secrets.
+- Confirm MongoDB Atlas allows the deployed backend to connect.
+- Use `NODE_ENV=production` so auth cookies are sent with `SameSite=None; Secure` for cross-site frontend/backend deployments.
+- Redeploy the frontend after changing any `VITE_*` environment variables.
+- If the backend host is known, tighten `frontend/vercel.json` `connect-src` from broad `https: wss:` to the exact backend HTTPS and WSS origins.
 
 ## How To Use / Test
 
@@ -303,12 +353,13 @@ Look for:
 ### Planned
 
 - Pagination for chat history
-- Better validation and error states
-- Deployment
+- Better frontend validation and error states
+- Public deployment
 
 ## Notes (Security + Dev Environment)
 
 - In development on localhost, cookies may show `Secure=false` depending on config.
-- In production, `Secure` should be enabled so cookies are only sent over HTTPS.
+- In production, cookies use `Secure=true` and `SameSite=None` so the deployed frontend can call the deployed backend with credentials over HTTPS.
 - JWT is intentionally stored in cookies instead of `localStorage`.
 - Protected routes depend on the auth cookie being sent with the request.
+- React renders message text as escaped text rather than raw HTML; avoid adding `dangerouslySetInnerHTML` unless content sanitisation is introduced first.
