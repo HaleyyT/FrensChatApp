@@ -4,6 +4,10 @@ A full-stack chat application focused on building production-style authenticatio
 
 ![Current workspace UI](docs/images/workspace-ui.png)
 
+## Licence
+
+This project is licensed under the MIT License. See [LICENSE](/Users/haleytran/Desktop/chatApp/LICENSE) for details.
+
 ## Current Milestone 
 
 Auth and the real-time chat flow are working end-to-end with:
@@ -222,15 +226,6 @@ npm run dev
 
 Frontend usually runs on `http://localhost:5173`
 
-## Deployment Notes
-
-Recommended hosting split:
-
-- Frontend: Vercel
-- Backend: Render, Railway, Fly.io, or another long-running Node host with WebSocket support
-- Database: MongoDB Atlas
-
-Vercel is a good fit for the React/Vite frontend. The Socket.IO backend should run on a long-running Node server because WebSocket connections need a persistent process.
 
 Backend environment variables:
 
