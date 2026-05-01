@@ -78,6 +78,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [sendError, setSendError] = useState("");
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [conversationActivity, setConversationActivity] = useState({});
   const [typingUserIds, setTypingUserIds] = useState([]);
   const messageEndRef = useRef(null);
   const stopTypingTimeoutRef = useRef(null);
@@ -127,6 +128,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
     setDraftMessage("");
     setSendError("");
     setUnreadCounts({});
+    setConversationActivity({});
     setTypingUserIds([]);
 
     loadUsers({ showLoading: true });
@@ -196,6 +198,10 @@ function Home({ currentUser, onLogout, onSessionChange }) {
           ...currentCounts,
           [senderId]: (currentCounts[senderId] || 0) + 1,
         }));
+        setConversationActivity((currentActivity) => ({
+          ...currentActivity,
+          [senderId]: Date.now(),
+        }));
         return;
       }
 
@@ -207,6 +213,10 @@ function Home({ currentUser, onLogout, onSessionChange }) {
 
         return [...currentMessages, newMessage];
       });
+      setConversationActivity((currentActivity) => ({
+        ...currentActivity,
+        [senderId]: Date.now(),
+      }));
       setTypingUserIds((currentIds) => currentIds.filter((id) => id !== senderId));
     }
 
@@ -266,15 +276,36 @@ function Home({ currentUser, onLogout, onSessionChange }) {
   const selectedUserIsTyping = selectedUser ? typingUserIds.includes(selectedUser._id) : false;
   const sidebarItems = isPreviewMode
     ? conversations
-    : users.map((user) => ({
-        id: user._id,
-        name: user.fullName,
-        preview: `@${user.username}`,
-        time: "",
-        active: user._id === selectedUserId,
-        isOnline: onlineUserSet.has(user._id),
-        unread: unreadCounts[user._id] || 0,
-      }));
+    : users
+        .map((user) => ({
+          id: user._id,
+          name: user.fullName,
+          preview: `@${user.username}`,
+          time: "",
+          active: user._id === selectedUserId,
+          isOnline: onlineUserSet.has(user._id),
+          lastActivityAt: conversationActivity[user._id] || 0,
+          unread: unreadCounts[user._id] || 0,
+        }))
+        .sort((firstUser, secondUser) => {
+          if (firstUser.unread !== secondUser.unread) {
+            return secondUser.unread - firstUser.unread;
+          }
+
+          if (firstUser.lastActivityAt !== secondUser.lastActivityAt) {
+            return secondUser.lastActivityAt - firstUser.lastActivityAt;
+          }
+
+          if (firstUser.isOnline !== secondUser.isOnline) {
+            return firstUser.isOnline ? -1 : 1;
+          }
+
+          if (firstUser.active !== secondUser.active) {
+            return firstUser.active ? -1 : 1;
+          }
+
+          return firstUser.name.localeCompare(secondUser.name);
+        });
   const activeConversationTitle = isPreviewMode
     ? "Design Review"
     : selectedUser?.fullName || "Select a conversation";
@@ -329,6 +360,10 @@ function Home({ currentUser, onLogout, onSessionChange }) {
 
       // Add the saved message immediately so the chat feels responsive without waiting for a reload.
       setLiveMessages((currentMessages) => [...currentMessages, newMessage]);
+      setConversationActivity((currentActivity) => ({
+        ...currentActivity,
+        [selectedUserId]: Date.now(),
+      }));
       setDraftMessage("");
     } catch (error) {
       console.error("Error sending message", error);
@@ -373,8 +408,8 @@ function Home({ currentUser, onLogout, onSessionChange }) {
 
   return (
     <div className="min-h-screen w-full px-4 pb-6 pt-24 text-slate-100 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
-      <div className="mx-auto flex h-[calc(100vh-8.5rem)] min-h-[640px] max-w-[1000px] overflow-hidden rounded-[32px] border border-white/14 bg-slate-950/48 shadow-[0_36px_120px_rgba(2,6,23,0.58)] backdrop-blur-2xl">
-        <aside className="hidden min-h-0 w-[280px] flex-col overflow-y-auto overscroll-contain border-r border-white/12 bg-slate-950/64 p-5 [scrollbar-gutter:stable] xl:flex">
+      <div className="mx-auto flex min-h-[calc(100vh-8.5rem)] max-w-[1360px] overflow-hidden rounded-[32px] border border-white/14 bg-slate-950/48 shadow-[0_36px_120px_rgba(2,6,23,0.58)] backdrop-blur-2xl">
+        <aside className="hidden max-h-[calc(100vh-8.5rem)] w-[300px] flex-col border-r border-white/12 bg-slate-950/64 p-5 xl:flex">
           <div className="mb-8 flex shrink-0 items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.42em] text-cyan-100/80">
@@ -429,7 +464,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
             </button>
           </div>
 
-          <div className="shrink-0 space-y-3 pr-1">
+          <div className="max-h-[48vh] space-y-3 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
             {isLoadingUsers && !isPreviewMode ? (
               <div className="rounded-[20px] border border-white/10 bg-white/6 p-4 text-sm font-medium text-slate-300">
                 Loading conversations...
@@ -492,8 +527,8 @@ function Home({ currentUser, onLogout, onSessionChange }) {
           </div>
         </aside>
 
-        <section className="flex min-h-0 flex-1 flex-col bg-gradient-to-b from-slate-950/32 via-slate-950/20 to-slate-950/42">
-          <header className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-white/12 px-4 py-4 sm:px-6">
+        <section className="flex min-h-[calc(100vh-8.5rem)] flex-1 flex-col bg-gradient-to-b from-slate-950/32 via-slate-950/20 to-slate-950/42">
+          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/12 px-4 py-4 sm:px-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-100/80">
                 Active conversation
@@ -523,8 +558,8 @@ function Home({ currentUser, onLogout, onSessionChange }) {
             </div>
           </header>
 
-          <div className="grid min-h-0 flex-1 gap-4 px-4 py-4 sm:px-5 xl:grid-cols-[minmax(0,1.2fr)_256px] xl:px-6">
-            <div className="flex min-h-0 flex-col rounded-[24px] border border-white/12 bg-slate-950/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-5 lg:p-6">
+          <div className="grid flex-1 gap-4 px-4 py-4 sm:px-5 2xl:grid-cols-[minmax(0,1fr)_300px] xl:px-6">
+            <div className="flex min-h-[400px] flex-col rounded-[24px] border border-white/12 bg-slate-950/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-5 lg:p-6">
               <div className="mb-6 flex items-center justify-between gap-4 xl:hidden">
                 <div className="flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-300/20 text-sm font-bold text-cyan-50">
@@ -540,7 +575,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
                 </span>
               </div>
 
-              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
+              <div className="max-h-[54vh] min-h-[280px] space-y-5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
                 {isLoadingMessages && !isPreviewMode ? (
                   <div className="rounded-[22px] border border-white/12 bg-white/7 px-4 py-4 text-sm font-medium text-slate-300">
                     Loading messages...
