@@ -5,10 +5,17 @@ import { getAuthCookieOptions } from '../utils/cookieOptions.js';
 
 export const signup = async (req, res) => {
     try {
-        const {fullName, username, password, confirmPassword, gender} = req.body;
+        const { password, confirmPassword } = req.body;
+        const fullName = typeof req.body.fullName === "string" ? req.body.fullName.trim() : "";
+        const username = typeof req.body.username === "string" ? req.body.username.trim() : "";
+        const gender = typeof req.body.gender === "string" ? req.body.gender : "";
         
         if (!fullName || !username || !password || !confirmPassword || !gender) {
             return res.status(400).json({error: "Missing required fields"});
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({error: "Password must be at least 6 characters"});
         }
 
         if (password !== confirmPassword) {
@@ -36,9 +43,9 @@ export const signup = async (req, res) => {
         })
 
         if (newUser) {
-            //Generate JWT token 
-            generateTokenAndSetCookie(newUser._id, res); 
             await newUser.save();
+            //Generate JWT token only after the account is persisted successfully.
+            generateTokenAndSetCookie(newUser._id, res);
             
             res.status(201).json({
                 _id: newUser._id,

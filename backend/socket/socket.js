@@ -1,7 +1,21 @@
 import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
+import User from "../models/user.models.js";
 
 let io;
 const onlineUserCounts = new Map();
+
+function getCookieValue(cookieHeader, cookieName) {
+  if (!cookieHeader || typeof cookieHeader !== "string") {
+    return "";
+  }
+
+  return cookieHeader
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith(`${cookieName}=`))
+    ?.slice(cookieName.length + 1) || "";
+}
 
 function broadcastOnlineUsers() {
   if (!io) {
@@ -19,14 +33,35 @@ export function attachSocketServer(server, allowedOrigins) {
     },
   });
 
-  io.on("connection", (socket) => {
-    const userId = socket.handshake.query.userId;
+  io.use(async (socket, next) => {
+    try {
+      const token = decodeURIComponent(getCookieValue(socket.handshake.headers.cookie, "jwt"));
 
-    // Ignore anonymous socket connections so presence only reflects authenticated app users.
-    if (!userId || typeof userId !== "string") {
-      socket.disconnect(true);
-      return;
+      if (!token) {
+        return next(new Error("Unauthorized socket connection"));
+      }
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      if (!decoded?.userId) {
+        return next(new Error("Unauthorized socket connection"));
+      }
+
+      const user = await User.findById(decoded.userId).select("_id");
+
+      if (!user) {
+        return next(new Error("Unauthorized socket connection"));
+      }
+
+      socket.userId = user._id.toString();
+      return next();
+    } catch {
+      return next(new Error("Unauthorized socket connection"));
     }
+  });
+
+  io.on("connection", (socket) => {
+    const userId = socket.userId;
 
     // Join a room named after the user id so controllers can emit directly to that person.
     socket.join(userId);

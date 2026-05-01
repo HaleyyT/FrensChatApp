@@ -26,6 +26,10 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ error: "Invalid receiver id" });
     }
 
+    if (receiverId === senderId.toString()) {
+      return res.status(400).json({ error: "Cannot send messages to yourself" });
+    }
+
     if (trimmedMessage.length > MAX_MESSAGE_LENGTH) {
       return res.status(400).json({ error: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer` });
     }
@@ -78,6 +82,10 @@ export const getMessages = async (req, res) => {
 
     if (!senderId) {
       return res.status(401).json({ error: "Unauthorized access" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userToChatId)) {
+      return res.status(400).json({ error: "Invalid user id" });
     }
 
     // Find the shared conversation first, then populate the stored message references in order.

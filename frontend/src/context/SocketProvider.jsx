@@ -20,9 +20,6 @@ export function SocketProvider({ currentUser, children }) {
 
     // Keep one shared socket connection per signed-in user so realtime features do not create duplicates.
     const nextSocket = io(SOCKET_SERVER_URL, {
-      query: {
-        userId: currentUser._id,
-      },
       withCredentials: true,
     });
 
