@@ -344,9 +344,9 @@ function Home({ currentUser, onLogout, onSessionChange }) {
 
   return (
     <div className="min-h-screen w-full px-4 pb-6 pt-24 text-slate-100 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
-      <div className="mx-auto flex min-h-[calc(100vh-8.5rem)] max-w-[1000px] overflow-hidden rounded-[32px] border border-white/14 bg-slate-950/48 shadow-[0_36px_120px_rgba(2,6,23,0.58)] backdrop-blur-2xl">
-        <aside className="hidden w-[280px] flex-col border-r border-white/12 bg-slate-950/64 p-5 xl:flex">
-          <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="mx-auto flex h-[calc(100vh-8.5rem)] min-h-[640px] max-w-[1000px] overflow-hidden rounded-[32px] border border-white/14 bg-slate-950/48 shadow-[0_36px_120px_rgba(2,6,23,0.58)] backdrop-blur-2xl">
+        <aside className="hidden min-h-0 w-[280px] flex-col border-r border-white/12 bg-slate-950/64 p-5 xl:flex">
+          <div className="mb-8 flex shrink-0 items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.42em] text-cyan-100/80">
                 Alpine Chat
@@ -373,7 +373,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
             )}
           </div>
 
-          <div className="mb-5 rounded-[24px] border border-white/12 bg-white/7 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
+          <div className="mb-5 shrink-0 rounded-[24px] border border-white/12 bg-white/7 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]">
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-slate-300">
               Workspace
             </p>
@@ -388,14 +388,14 @@ function Home({ currentUser, onLogout, onSessionChange }) {
             </div>
           </div>
 
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex shrink-0 items-center justify-between">
             <p className="text-sm font-semibold text-slate-200">Recent chats</p>
             <button className="text-sm font-semibold text-cyan-100 transition hover:text-cyan-50">
               View all
             </button>
           </div>
 
-          <div className="space-y-3">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
             {isLoadingUsers && !isPreviewMode ? (
               <div className="rounded-[20px] border border-white/10 bg-white/6 p-4 text-sm font-medium text-slate-300">
                 Loading conversations...
@@ -447,7 +447,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
             )}
           </div>
 
-          <div className="mt-auto rounded-[24px] border border-cyan-300/18 bg-gradient-to-br from-cyan-300/18 via-slate-900/55 to-white/7 p-4">
+          <div className="mt-5 shrink-0 rounded-[24px] border border-cyan-300/18 bg-gradient-to-br from-cyan-300/18 via-slate-900/55 to-white/7 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-50/85">
               Performance
             </p>
