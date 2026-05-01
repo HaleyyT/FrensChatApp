@@ -407,15 +407,15 @@ function Home({ currentUser, onLogout, onSessionChange }) {
   }
 
   return (
-    <div className="min-h-screen w-full px-4 pb-6 pt-24 text-slate-100 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
-      <div className="mx-auto flex min-h-[calc(100vh-8.5rem)] max-w-[1360px] overflow-hidden rounded-[32px] border border-white/14 bg-slate-950/48 shadow-[0_36px_120px_rgba(2,6,23,0.58)] backdrop-blur-2xl">
-        <aside className="hidden max-h-[calc(100vh-8.5rem)] w-[300px] flex-col border-r border-white/12 bg-slate-950/64 p-5 xl:flex">
-          <div className="mb-8 flex shrink-0 items-start justify-between gap-4">
+    <div className="min-h-screen w-full px-4 pb-6 pt-24 text-slate-100 sm:px-6 sm:pb-8 lg:px-[50px] lg:pb-10">
+      <div className="mx-auto flex min-h-[calc(100vh-12rem)] max-w-[1088px] overflow-hidden rounded-[32px] border border-white/14 bg-slate-950/48 shadow-[0_36px_120px_rgba(2,6,23,0.58)] backdrop-blur-2xl">
+        <aside className="hidden max-h-[calc(100vh-12rem)] w-[280px] flex-col border-r border-white/12 bg-slate-950/64 p-5 xl:flex">
+          <div className="mb-6 flex shrink-0 items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.42em] text-cyan-100/80">
                 Alpine Chat
               </p>
-              <h1 className="mt-2 font-serif text-[2.5rem] leading-none text-white">
+              <h1 className="mt-2 font-serif text-[2.15rem] leading-none text-white">
                 Evening Edition
               </h1>
               <p className="mt-3 max-w-xs text-sm font-medium leading-6 text-slate-300">
@@ -464,7 +464,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
             </button>
           </div>
 
-          <div className="max-h-[48vh] space-y-3 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
+          <div className="min-h-[264px] max-h-[340px] space-y-3 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
             {isLoadingUsers && !isPreviewMode ? (
               <div className="rounded-[20px] border border-white/10 bg-white/6 p-4 text-sm font-medium text-slate-300">
                 Loading conversations...
@@ -479,7 +479,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
                       setSelectedUserId(conversation.id);
                     }
                   }}
-                  className={`w-full rounded-[20px] border p-3.5 text-left transition duration-300 ease-in-out ${
+                  className={`w-full rounded-[20px] border p-3 text-left transition duration-300 ease-in-out ${
                     conversation.active
                       ? "border-cyan-300/34 bg-cyan-300/16 shadow-[0_20px_45px_rgba(0,229,255,0.11)]"
                       : "border-white/10 bg-white/6 hover:bg-white/9"
@@ -508,7 +508,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
                       {conversation.isOnline ? "Online" : "Offline"}
                     </p>
                   ) : null}
-                  <p className="mt-2 text-sm font-medium leading-6 text-slate-200">
+                  <p className="mt-2 text-sm font-medium leading-5 text-slate-200">
                     {conversation.preview}
                   </p>
                 </button>
@@ -527,7 +527,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
           </div>
         </aside>
 
-        <section className="flex min-h-[calc(100vh-8.5rem)] flex-1 flex-col bg-gradient-to-b from-slate-950/32 via-slate-950/20 to-slate-950/42">
+        <section className="flex min-h-[calc(100vh-12rem)] flex-1 flex-col bg-gradient-to-b from-slate-950/32 via-slate-950/20 to-slate-950/42">
           <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/12 px-4 py-4 sm:px-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-100/80">
@@ -575,7 +575,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
                 </span>
               </div>
 
-              <div className="max-h-[54vh] min-h-[280px] space-y-5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
+              <div className="max-h-[46vh] min-h-[260px] space-y-5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
                 {isLoadingMessages && !isPreviewMode ? (
                   <div className="rounded-[22px] border border-white/12 bg-white/7 px-4 py-4 text-sm font-medium text-slate-300">
                     Loading messages...
