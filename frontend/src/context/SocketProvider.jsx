@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { io } from "socket.io-client";
-import { SOCKET_SERVER_URL } from "../lib/api";
+import { getStoredAuthToken, SOCKET_SERVER_URL } from "../lib/api";
 import SocketContext from "./socketContext";
 
 export function SocketProvider({ currentUser, children }) {
@@ -20,6 +20,9 @@ export function SocketProvider({ currentUser, children }) {
 
     // Keep one shared socket connection per signed-in user so realtime features do not create duplicates.
     const nextSocket = io(SOCKET_SERVER_URL, {
+      auth: {
+        token: getStoredAuthToken(),
+      },
       withCredentials: true,
     });
 

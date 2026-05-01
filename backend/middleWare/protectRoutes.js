@@ -1,9 +1,25 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/user.models.js';
 
+function getBearerToken(req) {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || typeof authHeader !== "string") {
+        return "";
+    }
+
+    const [scheme, token] = authHeader.split(" ");
+
+    if (scheme?.toLowerCase() !== "bearer" || !token) {
+        return "";
+    }
+
+    return token;
+}
+
 const protectRoutes = async (req, res, next) => {
     try {
-        const token = req.cookies.jwt;
+        const token = req.cookies.jwt || getBearerToken(req);
         if (!token) {
             return res.status(401).json({ error: "Unauthorised access - No token provided" });
         }

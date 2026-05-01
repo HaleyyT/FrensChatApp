@@ -17,6 +17,16 @@ function getCookieValue(cookieHeader, cookieName) {
     ?.slice(cookieName.length + 1) || "";
 }
 
+function getSocketToken(socket) {
+  const cookieToken = getCookieValue(socket.handshake.headers.cookie, "jwt");
+
+  if (cookieToken) {
+    return decodeURIComponent(cookieToken);
+  }
+
+  return typeof socket.handshake.auth?.token === "string" ? socket.handshake.auth.token : "";
+}
+
 function broadcastOnlineUsers() {
   if (!io) {
     return;
@@ -35,7 +45,7 @@ export function attachSocketServer(server, allowedOrigins) {
 
   io.use(async (socket, next) => {
     try {
-      const token = decodeURIComponent(getCookieValue(socket.handshake.headers.cookie, "jwt"));
+      const token = getSocketToken(socket);
 
       if (!token) {
         return next(new Error("Unauthorized socket connection"));

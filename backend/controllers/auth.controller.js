@@ -45,12 +45,13 @@ export const signup = async (req, res) => {
         if (newUser) {
             await newUser.save();
             //Generate JWT token only after the account is persisted successfully.
-            generateTokenAndSetCookie(newUser._id, res);
+            const token = generateTokenAndSetCookie(newUser._id, res);
             
             res.status(201).json({
                 _id: newUser._id,
                 fullName: newUser.fullName,
                 username: newUser.username,
+                token,
                 //profilePic: newUser.profilePic,
             });
 
@@ -82,12 +83,13 @@ export const login = async (req, res) => {
             return res.status(400).json({error: "Invalid username or password"});
         }
 
-        generateTokenAndSetCookie(user._id, res);
+        const token = generateTokenAndSetCookie(user._id, res);
 
         return res.status(200).json({
             _id: user._id,
             fullName: user.fullName,
             username: user.username,
+            token,
             //profilePic: newUser.profilePic,
         });
 
