@@ -17,23 +17,6 @@ function getCookieValue(cookieHeader, cookieName) {
     ?.slice(cookieName.length + 1) || "";
 }
 
-function getSocketToken(socket) {
-  // First check the auth token sent in the Socket.IO handshake, which is more secure than cookies for WebSocket connections.
-  const authToken = typeof socket.handshake.auth?.token === "string" ? socket.handshake.auth.token : "";
-
-  if (authToken) {
-    return authToken;
-  }
-
-  const cookieToken = getCookieValue(socket.handshake.headers.cookie, "jwt");
-
-  if (cookieToken) {
-    return decodeURIComponent(cookieToken);
-  }
-
-  return "";
-}
-
 function broadcastOnlineUsers() {
   if (!io) {
     return;

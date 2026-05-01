@@ -3,8 +3,7 @@ import User from '../models/user.models.js';
 
 const protectRoutes = async (req, res, next) => {
     try {
-        // First check the Authorisation header for a Bearer token, which is more secure than cookies for REST API calls.
-        const token = getBearerToken(req) || req.cookies.jwt;
+        const token = req.cookies.jwt;
         if (!token) {
             return res.status(401).json({ error: "Unauthorised access - No token provided" });
         }
