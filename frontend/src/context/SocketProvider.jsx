@@ -35,7 +35,7 @@ export function SocketProvider({ currentUser, children }) {
       setOnlineUserIds([]);
       setSocket(null);
     };
-  }, [currentUser]);
+  }, [currentUser?._id]);
 
   return (
     <SocketContext.Provider value={{ socket, onlineUserIds }}>

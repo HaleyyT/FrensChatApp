@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "./App.css";
 import Home from "./pages/home/home";
 import Login from "./pages/login/login";
@@ -12,22 +12,52 @@ function App() {
   const [authView, setAuthView] = useState("login");
   const [showWorkspacePreview, setShowWorkspacePreview] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const lastSessionCheckRef = useRef(0);
+  const sessionRequestRef = useRef(null);
 
-  const restoreSession = useCallback(async () => {
+  const restoreSession = useCallback(async ({ force = false } = {}) => {
+    const now = Date.now();
+
+    if (!force && now - lastSessionCheckRef.current < 3000) {
+      return sessionRequestRef.current;
+    }
+
+    lastSessionCheckRef.current = now;
+    const sessionRequest = getCurrentUser()
+      .then((user) => {
+        setCurrentUser((currentUser) => {
+          if (
+            currentUser?._id === user._id &&
+            currentUser.fullName === user.fullName &&
+            currentUser.username === user.username
+          ) {
+            return currentUser;
+          }
+
+          return user;
+        });
+        setShowWorkspacePreview(false);
+      })
+      .catch(() => {
+        setCurrentUser(null);
+      })
+      .finally(() => {
+        setIsCheckingSession(false);
+        sessionRequestRef.current = null;
+      });
+
+    sessionRequestRef.current = sessionRequest;
+
     try {
-      const user = await getCurrentUser();
-      setCurrentUser(user);
-      setShowWorkspacePreview(false);
+      await sessionRequest;
     } catch {
-      setCurrentUser(null);
-    } finally {
-      setIsCheckingSession(false);
+      // The request promise already normalises failed auth into a signed-out state.
     }
   }, []);
 
   useEffect(() => {
     // Ask the backend if the browser still has a valid auth cookie after refresh.
-    restoreSession();
+    restoreSession({ force: true });
   }, [restoreSession]);
 
   useEffect(() => {
@@ -37,11 +67,9 @@ function App() {
       }
     }
 
-    window.addEventListener("focus", restoreSession);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      window.removeEventListener("focus", restoreSession);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [restoreSession]);

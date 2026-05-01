@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { getCurrentUser, getMessages, getUsers, logout, sendMessage } from "../../lib/api";
 import useSocket from "../../context/useSocket";
@@ -73,6 +73,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
   const [liveMessages, setLiveMessages] = useState([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isRefreshingUsers, setIsRefreshingUsers] = useState(false);
   const [draftMessage, setDraftMessage] = useState("");
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [sendError, setSendError] = useState("");
@@ -80,6 +81,40 @@ function Home({ currentUser, onLogout, onSessionChange }) {
   const [typingUserIds, setTypingUserIds] = useState([]);
   const messageEndRef = useRef(null);
   const stopTypingTimeoutRef = useRef(null);
+
+  const loadUsers = useCallback(async ({ showLoading = false } = {}) => {
+    if (isPreviewMode) {
+      return;
+    }
+
+    if (showLoading) {
+      setIsLoadingUsers(true);
+    } else {
+      setIsRefreshingUsers(true);
+    }
+
+    try {
+      const data = await getUsers();
+      const sidebarUsers = data.filterUsers || [];
+
+      setUsers(sidebarUsers);
+      setSelectedUserId((currentSelectedUserId) => {
+        if (sidebarUsers.some((user) => user._id === currentSelectedUserId)) {
+          return currentSelectedUserId;
+        }
+
+        return sidebarUsers[0]?._id || "";
+      });
+    } catch (error) {
+      console.error("Error loading users", error);
+    } finally {
+      if (showLoading) {
+        setIsLoadingUsers(false);
+      } else {
+        setIsRefreshingUsers(false);
+      }
+    }
+  }, [isPreviewMode]);
 
   useEffect(() => {
     if (isPreviewMode) {
@@ -94,28 +129,22 @@ function Home({ currentUser, onLogout, onSessionChange }) {
     setUnreadCounts({});
     setTypingUserIds([]);
 
-    async function loadUsers() {
-      setIsLoadingUsers(true);
+    loadUsers({ showLoading: true });
+  }, [currentUser?._id, isPreviewMode, loadUsers]);
 
-      try {
-        const data = await getUsers();
-        const sidebarUsers = data.filterUsers || [];
-
-        // Store the real sidebar users so the workspace can stop relying on the mock list after login.
-        setUsers(sidebarUsers);
-
-        if (sidebarUsers.length > 0) {
-          setSelectedUserId(sidebarUsers[0]._id);
-        }
-      } catch (error) {
-        console.error("Error loading users", error);
-      } finally {
-        setIsLoadingUsers(false);
-      }
+  useEffect(() => {
+    if (isPreviewMode) {
+      return;
     }
 
-    loadUsers();
-  }, [currentUser?._id, isPreviewMode]);
+    const refreshUsersInterval = setInterval(() => {
+      loadUsers();
+    }, 15000);
+
+    return () => {
+      clearInterval(refreshUsersInterval);
+    };
+  }, [isPreviewMode, loadUsers]);
 
   useEffect(() => {
     if (isPreviewMode || !selectedUserId) {
@@ -288,7 +317,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
       const activeSessionUser = await getCurrentUser();
 
       if (activeSessionUser._id !== currentUser._id) {
-        await onSessionChange?.();
+        await onSessionChange?.({ force: true });
         setSendError("This browser session changed accounts. The workspace has been refreshed to match the current login.");
         return;
       }
@@ -390,8 +419,13 @@ function Home({ currentUser, onLogout, onSessionChange }) {
 
           <div className="mb-4 flex shrink-0 items-center justify-between">
             <p className="text-sm font-semibold text-slate-200">Recent chats</p>
-            <button className="text-sm font-semibold text-cyan-100 transition hover:text-cyan-50">
-              View all
+            <button
+              type="button"
+              onClick={() => loadUsers()}
+              disabled={isRefreshingUsers}
+              className="text-sm font-semibold text-cyan-100 transition hover:text-cyan-50 disabled:cursor-wait disabled:opacity-60"
+            >
+              {isRefreshingUsers ? "Refreshing" : "Refresh"}
             </button>
           </div>
 
@@ -458,8 +492,8 @@ function Home({ currentUser, onLogout, onSessionChange }) {
           </div>
         </aside>
 
-        <section className="flex min-h-[calc(100vh-8.5rem)] flex-1 flex-col bg-gradient-to-b from-slate-950/32 via-slate-950/20 to-slate-950/42">
-          <header className="flex flex-wrap items-center justify-between gap-4 border-b border-white/12 px-4 py-4 sm:px-6">
+        <section className="flex min-h-0 flex-1 flex-col bg-gradient-to-b from-slate-950/32 via-slate-950/20 to-slate-950/42">
+          <header className="flex shrink-0 flex-wrap items-center justify-between gap-4 border-b border-white/12 px-4 py-4 sm:px-6">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.32em] text-cyan-100/80">
                 Active conversation
@@ -489,8 +523,8 @@ function Home({ currentUser, onLogout, onSessionChange }) {
             </div>
           </header>
 
-          <div className="grid flex-1 gap-4 px-4 py-4 sm:px-5 xl:grid-cols-[minmax(0,1.2fr)_256px] xl:px-6">
-            <div className="flex min-h-[400px] flex-col rounded-[24px] border border-white/12 bg-slate-950/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-5 lg:p-6">
+          <div className="grid min-h-0 flex-1 gap-4 px-4 py-4 sm:px-5 xl:grid-cols-[minmax(0,1.2fr)_256px] xl:px-6">
+            <div className="flex min-h-0 flex-col rounded-[24px] border border-white/12 bg-slate-950/42 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] sm:p-5 lg:p-6">
               <div className="mb-6 flex items-center justify-between gap-4 xl:hidden">
                 <div className="flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-300/20 text-sm font-bold text-cyan-50">
@@ -506,7 +540,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
                 </span>
               </div>
 
-              <div className="space-y-5">
+              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
                 {isLoadingMessages && !isPreviewMode ? (
                   <div className="rounded-[22px] border border-white/12 bg-white/7 px-4 py-4 text-sm font-medium text-slate-300">
                     Loading messages...
