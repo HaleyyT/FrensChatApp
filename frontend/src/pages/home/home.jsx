@@ -374,7 +374,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
   return (
     <div className="min-h-screen w-full px-4 pb-6 pt-24 text-slate-100 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
       <div className="mx-auto flex h-[calc(100vh-8.5rem)] min-h-[640px] max-w-[1000px] overflow-hidden rounded-[32px] border border-white/14 bg-slate-950/48 shadow-[0_36px_120px_rgba(2,6,23,0.58)] backdrop-blur-2xl">
-        <aside className="hidden min-h-0 w-[280px] flex-col border-r border-white/12 bg-slate-950/64 p-5 xl:flex">
+        <aside className="hidden min-h-0 w-[280px] flex-col overflow-y-auto overscroll-contain border-r border-white/12 bg-slate-950/64 p-5 [scrollbar-gutter:stable] xl:flex">
           <div className="mb-8 flex shrink-0 items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.42em] text-cyan-100/80">
@@ -429,7 +429,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
             </button>
           </div>
 
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
+          <div className="shrink-0 space-y-3 pr-1">
             {isLoadingUsers && !isPreviewMode ? (
               <div className="rounded-[20px] border border-white/10 bg-white/6 p-4 text-sm font-medium text-slate-300">
                 Loading conversations...
@@ -540,7 +540,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
                 </span>
               </div>
 
-              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
+              <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
                 {isLoadingMessages && !isPreviewMode ? (
                   <div className="rounded-[22px] border border-white/12 bg-white/7 px-4 py-4 text-sm font-medium text-slate-300">
                     Loading messages...
@@ -581,7 +581,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
                 <div ref={messageEndRef} />
               </div>
 
-              <div className="mt-auto pt-7">
+              <div className="shrink-0 pt-7">
                 <div className="rounded-[24px] border border-white/12 bg-slate-950/78 p-3 shadow-[0_28px_60px_rgba(15,23,42,0.4)]">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
                     <label className="flex-1">
