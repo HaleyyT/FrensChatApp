@@ -25,6 +25,17 @@ Auth and the real-time chat flow are working end-to-end with:
 - timestamps, auto-scroll, and Enter-to-send composer UX
 - instant UI updates across active user sessions
 
+## Best Demo Method
+
+Recommended demo flow:
+
+1. Open the deployed frontend.
+2. Create two demo accounts, or use two seeded/demo accounts if available.
+3. Open User A in a normal browser window and User B in an incognito window or another browser.
+4. Select each user from the sidebar.
+5. Send a message, show it arriving live, type in the composer, show the typing indicator, then switch conversations to show unread badges.
+
+
 ## Stack
 
 - Frontend: React (Vite), Tailwind CSS, daisyUI, Socket.IO client
@@ -87,6 +98,7 @@ This project is built to practice real engineering skills:
 - Basic message validation for receiver id, receiver existence, blank messages, and maximum message length
 - Helmet security headers on the backend API
 - Rate limits on auth and message endpoints to reduce brute-force and spam risk
+- Socket.IO authenticates the existing JWT cookie before joining user rooms or broadcasting presence
 - Vercel frontend security headers, including a Content Security Policy for script-injection protection
 
 ### Backend Foundation
@@ -254,11 +266,66 @@ Deployment checklist:
 - Redeploy the frontend after changing any `VITE_*` environment variables.
 - If the backend host is known, tighten `frontend/vercel.json` `connect-src` from broad `https: wss:` to the exact backend HTTPS and WSS origins.
 
+## Recommended Deployment Path
+
+Use two services:
+
+- Frontend: Vercel, because the Vite app builds into static files and `frontend/vercel.json` already defines frontend security headers.
+- Backend: Render, Railway, Fly.io, or another Node web-service host that supports long-running Express servers and WebSocket upgrades. Do not deploy this backend as a serverless function because Socket.IO needs a persistent server process.
+
+### Backend on Render
+
+Create a Render Web Service from the repository:
+
+```text
+Root directory: .
+Build command: npm install
+Start command: npm start
+```
+
+Set backend environment variables in the host dashboard:
+
+```bash
+NODE_ENV=production
+MONGO_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_long_random_secret
+CLIENT_URL=https://your-frontend.vercel.app
+```
+
+Render provides the public port through `PORT`, and the backend already reads `process.env.PORT`.
+
+### Frontend on Vercel
+
+Create a Vercel project from the same repository:
+
+```text
+Root directory: frontend
+Build command: npm run build
+Output directory: dist
+```
+
+Set frontend environment variables in Vercel:
+
+```bash
+VITE_API_BASE_URL=https://your-backend-host.com/api
+VITE_SOCKET_SERVER_URL=https://your-backend-host.com
+```
+
+After the backend URL is final, update backend `CLIENT_URL` to the exact Vercel production URL, then redeploy the backend. After changing any `VITE_*` variable, redeploy the frontend because Vite embeds those values at build time.
+
+### MongoDB Atlas
+
+Before the final demo:
+
+- Add the backend host's outbound IPs if your Atlas project uses IP allowlists, or use Atlas settings appropriate for a short demo.
+- Confirm the database user has only the permissions needed for this app.
+- Keep `MONGO_URI` and `JWT_SECRET` in hosting dashboards only, never in Git.
+
 ## How To Use / Test
 
 ### Browser flow
 
-Most people should use the browser UI to sign up, log in, and chat. Curl is only included below for optional backend API checks.
+You can use the browser UI to sign up, log in, and chat. Curl is only included below for optional backend API checks.
 
 1. Start the backend with `npm run server`.
 2. Start the frontend with `cd frontend` then `npm run dev`.
@@ -297,7 +364,7 @@ curl -i -X POST "http://localhost:5000/api/auth/signup" \
 Look for:
 
 - `HTTP/1.1 201 Created`
-- `Set-Cookie: jwt=...; HttpOnly; SameSite=Strict; ...`
+- `Set-Cookie: jwt=...; HttpOnly; SameSite=Lax; ...` locally, or `SameSite=None; Secure` in production
 
 ### Login
 
