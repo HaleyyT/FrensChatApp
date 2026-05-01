@@ -18,13 +18,19 @@ function getCookieValue(cookieHeader, cookieName) {
 }
 
 function getSocketToken(socket) {
+  const authToken = typeof socket.handshake.auth?.token === "string" ? socket.handshake.auth.token : "";
+
+  if (authToken) {
+    return authToken;
+  }
+
   const cookieToken = getCookieValue(socket.handshake.headers.cookie, "jwt");
 
   if (cookieToken) {
     return decodeURIComponent(cookieToken);
   }
 
-  return typeof socket.handshake.auth?.token === "string" ? socket.handshake.auth.token : "";
+  return "";
 }
 
 function broadcastOnlineUsers() {

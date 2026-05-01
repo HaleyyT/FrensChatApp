@@ -19,7 +19,7 @@ function getBearerToken(req) {
 
 const protectRoutes = async (req, res, next) => {
     try {
-        const token = req.cookies.jwt || getBearerToken(req);
+        const token = getBearerToken(req) || req.cookies.jwt;
         if (!token) {
             return res.status(401).json({ error: "Unauthorised access - No token provided" });
         }
