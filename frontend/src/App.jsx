@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./App.css";
 import Home from "./pages/home/home";
 import Login from "./pages/login/login";
@@ -13,21 +13,38 @@ function App() {
   const [showWorkspacePreview, setShowWorkspacePreview] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
 
+  const restoreSession = useCallback(async () => {
+    try {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+      setShowWorkspacePreview(false);
+    } catch {
+      setCurrentUser(null);
+    } finally {
+      setIsCheckingSession(false);
+    }
+  }, []);
+
   useEffect(() => {
-    async function restoreSession() {
-      try {
-        const user = await getCurrentUser();
-        setCurrentUser(user);
-      } catch {
-        setCurrentUser(null);
-      } finally {
-        setIsCheckingSession(false);
+    // Ask the backend if the browser still has a valid auth cookie after refresh.
+    restoreSession();
+  }, [restoreSession]);
+
+  useEffect(() => {
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        restoreSession();
       }
     }
 
-    // Ask the backend if the browser still has a valid auth cookie after refresh.
-    restoreSession();
-  }, []);
+    window.addEventListener("focus", restoreSession);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", restoreSession);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [restoreSession]);
 
   async function handleAuthToggle(nextView) {
     if (nextView === "workspace") {
@@ -96,7 +113,11 @@ function App() {
         </div>
 
         {currentUser ? (
-          <Home currentUser={currentUser} onLogout={() => setCurrentUser(null)} />
+          <Home
+            currentUser={currentUser}
+            onLogout={() => setCurrentUser(null)}
+            onSessionChange={restoreSession}
+          />
         ) : showWorkspacePreview ? (
           <Home />
         ) : (
