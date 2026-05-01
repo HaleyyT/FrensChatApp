@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { getMessages, getUsers, logout, sendMessage } from "../../lib/api";
+import { getCurrentUser, getMessages, getUsers, logout, sendMessage } from "../../lib/api";
 import useSocket from "../../context/useSocket";
 
 const conversations = [
@@ -61,7 +61,7 @@ function formatMessageTime(timestamp) {
   }).format(new Date(timestamp));
 }
 
-function Home({ currentUser, onLogout }) {
+function Home({ currentUser, onLogout, onSessionChange }) {
   const { socket, onlineUserIds } = useSocket();
   const displayUser = currentUser || {
     fullName: "Haley Tran",
@@ -86,6 +86,14 @@ function Home({ currentUser, onLogout }) {
       return;
     }
 
+    setUsers([]);
+    setSelectedUserId("");
+    setLiveMessages([]);
+    setDraftMessage("");
+    setSendError("");
+    setUnreadCounts({});
+    setTypingUserIds([]);
+
     async function loadUsers() {
       setIsLoadingUsers(true);
 
@@ -107,7 +115,7 @@ function Home({ currentUser, onLogout }) {
     }
 
     loadUsers();
-  }, [isPreviewMode]);
+  }, [currentUser?._id, isPreviewMode]);
 
   useEffect(() => {
     if (isPreviewMode || !selectedUserId) {
@@ -277,6 +285,14 @@ function Home({ currentUser, onLogout }) {
     setIsSendingMessage(true);
 
     try {
+      const activeSessionUser = await getCurrentUser();
+
+      if (activeSessionUser._id !== currentUser._id) {
+        await onSessionChange?.();
+        setSendError("This browser session changed accounts. The workspace has been refreshed to match the current login.");
+        return;
+      }
+
       socket?.emit("stopTyping", { receiverId: selectedUserId });
       clearTimeout(stopTypingTimeoutRef.current);
 
@@ -656,6 +672,7 @@ Home.propTypes = {
     username: PropTypes.string.isRequired,
   }),
   onLogout: PropTypes.func,
+  onSessionChange: PropTypes.func,
 };
 
 export default Home;
