@@ -110,3 +110,7 @@ export function getIO() {
 
   return io;
 }
+
+export function isUserOnline(userId) {
+  return onlineUserCounts.has(userId.toString());
+}

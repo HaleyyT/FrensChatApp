@@ -14,6 +14,14 @@ const messageSchema = new mongoose.Schema({
     message:{
         type: String,
         required: true
+    },
+    deliveredAt:{
+        type: Date,
+        default: null
+    },
+    readAt:{
+        type: Date,
+        default: null
     }
     //createdAt, updatedAt
     //mongoose shows the time messages sent

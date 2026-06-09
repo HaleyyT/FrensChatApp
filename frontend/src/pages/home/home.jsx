@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { getCurrentUser, getMessages, getUsers, logout, sendMessage } from "../../lib/api";
+import { getCurrentUser, getMessages, getUsers, logout, markMessagesRead, sendMessage } from "../../lib/api";
 import useSocket from "../../context/useSocket";
 
 const conversations = [
@@ -59,6 +59,18 @@ function formatMessageTime(timestamp) {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(timestamp));
+}
+
+function formatMessageStatus(message) {
+  if (message.readAt) {
+    return "Read";
+  }
+
+  if (message.deliveredAt) {
+    return "Delivered";
+  }
+
+  return "Sent";
 }
 
 function Home({ currentUser, onLogout, onSessionChange }) {
@@ -159,6 +171,8 @@ function Home({ currentUser, onLogout, onSessionChange }) {
       try {
         const data = await getMessages(selectedUserId);
         setLiveMessages(data);
+
+        await markMessagesRead(selectedUserId);
       } catch (error) {
         console.error("Error loading messages", error);
       } finally {
@@ -213,6 +227,9 @@ function Home({ currentUser, onLogout, onSessionChange }) {
 
         return [...currentMessages, newMessage];
       });
+      markMessagesRead(senderId).catch((error) => {
+        console.error("Error marking messages as read", error);
+      });
       setConversationActivity((currentActivity) => ({
         ...currentActivity,
         [senderId]: Date.now(),
@@ -226,6 +243,32 @@ function Home({ currentUser, onLogout, onSessionChange }) {
       socket.off("newMessage", handleIncomingMessage);
     };
   }, [currentUser, isPreviewMode, selectedUserId, socket]);
+
+  useEffect(() => {
+    if (isPreviewMode || !socket || !currentUser?._id) {
+      return;
+    }
+
+    function handleMessagesRead({ readerId, messageIds, readAt }) {
+      if (!Array.isArray(messageIds) || readerId !== selectedUserId) {
+        return;
+      }
+
+      setLiveMessages((currentMessages) =>
+        currentMessages.map((message) =>
+          messageIds.includes(message._id)
+            ? { ...message, readAt }
+            : message
+        )
+      );
+    }
+
+    socket.on("messagesRead", handleMessagesRead);
+
+    return () => {
+      socket.off("messagesRead", handleMessagesRead);
+    };
+  }, [currentUser?._id, isPreviewMode, selectedUserId, socket]);
 
   useEffect(() => {
     if (isPreviewMode || !socket) {
@@ -323,6 +366,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
         text: message.message,
         isUser: message.senderId === currentUser?._id,
         time: formatMessageTime(message.createdAt),
+        status: message.senderId === currentUser?._id ? formatMessageStatus(message) : "",
       }));
 
   async function handleLogout() {
@@ -598,6 +642,11 @@ function Home({ currentUser, onLogout, onSessionChange }) {
                         {message.time ? (
                           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
                             {message.time}
+                          </span>
+                        ) : null}
+                        {message.status ? (
+                          <span className="rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-100">
+                            {message.status}
                           </span>
                         ) : null}
                       </div>

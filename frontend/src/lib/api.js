@@ -54,6 +54,12 @@ export function sendMessage(userId, message) {
   });
 }
 
+export function markMessagesRead(userId) {
+  return apiRequest(`/message/read/${userId}`, {
+    method: "PATCH",
+  });
+}
+
 export function logout() {
   return apiRequest("/auth/logout", {
     method: "POST",

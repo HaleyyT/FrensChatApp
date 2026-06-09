@@ -1,7 +1,7 @@
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
 import User from "../models/user.models.js";
-import { getIO } from "../socket/socket.js";
+import { getIO, isUserOnline } from "../socket/socket.js";
 import mongoose from "mongoose";
 
 const MAX_MESSAGE_LENGTH = 2000;
@@ -57,6 +57,7 @@ export const sendMessage = async (req, res) => {
       senderId,
       receiverId,
       message: trimmedMessage,
+      deliveredAt: isUserOnline(receiverId) ? new Date() : null,
     });
 
     // Link message into conversation (match your schema field name!)
@@ -71,6 +72,50 @@ export const sendMessage = async (req, res) => {
     return res.status(201).json(newMessage);
   } catch (error) {
     console.log("Error in sendMessage controller", error.message);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const markMessagesAsRead = async (req, res) => {
+  try {
+    const { id: otherUserId } = req.params;
+    const readerId = req.user?._id;
+
+    if (!readerId) {
+      return res.status(401).json({ error: "Unauthorized access" });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(otherUserId)) {
+      return res.status(400).json({ error: "Invalid user id" });
+    }
+
+    const readAt = new Date();
+    const unreadMessages = await Message.find({
+      senderId: otherUserId,
+      receiverId: readerId,
+      readAt: null,
+    }).select("_id senderId");
+
+    if (unreadMessages.length === 0) {
+      return res.status(200).json({ readMessageIds: [], readAt });
+    }
+
+    const readMessageIds = unreadMessages.map((message) => message._id);
+
+    await Message.updateMany(
+      { _id: { $in: readMessageIds } },
+      { $set: { readAt, deliveredAt: readAt } }
+    );
+
+    getIO().to(otherUserId.toString()).emit("messagesRead", {
+      readerId: readerId.toString(),
+      messageIds: readMessageIds.map((messageId) => messageId.toString()),
+      readAt,
+    });
+
+    return res.status(200).json({ readMessageIds, readAt });
+  } catch (error) {
+    console.log("Error in markMessagesAsRead controller", error.message);
     return res.status(500).json({ error: "Internal server error" });
   }
 };
