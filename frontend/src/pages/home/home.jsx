@@ -61,6 +61,29 @@ function formatMessageTime(timestamp) {
   }).format(new Date(timestamp));
 }
 
+function formatRelativeTime(timestamp) {
+  if (!timestamp) {
+    return "";
+  }
+
+  const elapsedMs = Date.now() - new Date(timestamp).getTime();
+  const elapsedMinutes = Math.max(1, Math.floor(elapsedMs / 60000));
+
+  if (elapsedMinutes < 60) {
+    return `${elapsedMinutes}m ago`;
+  }
+
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+
+  if (elapsedHours < 24) {
+    return `${elapsedHours}h ago`;
+  }
+
+  const elapsedDays = Math.floor(elapsedHours / 24);
+
+  return `${elapsedDays}d ago`;
+}
+
 function formatMessageStatus(message) {
   if (message.readAt) {
     return "Read";
@@ -71,6 +94,16 @@ function formatMessageStatus(message) {
   }
 
   return "Sent";
+}
+
+function getMessagePreview(message, currentUserId) {
+  if (!message?.message) {
+    return "";
+  }
+
+  const prefix = message.senderId === currentUserId ? "You: " : "";
+
+  return `${prefix}${message.message}`;
 }
 
 function Home({ currentUser, onLogout, onSessionChange }) {
@@ -111,6 +144,26 @@ function Home({ currentUser, onLogout, onSessionChange }) {
       const sidebarUsers = data.filterUsers || [];
 
       setUsers(sidebarUsers);
+      setUnreadCounts((currentCounts) => {
+        const nextCounts = { ...currentCounts };
+
+        for (const user of sidebarUsers) {
+          nextCounts[user._id] = user.unreadCount || 0;
+        }
+
+        return nextCounts;
+      });
+      setConversationActivity((currentActivity) => {
+        const nextActivity = { ...currentActivity };
+
+        for (const user of sidebarUsers) {
+          if (!nextActivity[user._id] && user.lastActivityAt) {
+            nextActivity[user._id] = new Date(user.lastActivityAt).getTime();
+          }
+        }
+
+        return nextActivity;
+      });
       setSelectedUserId((currentSelectedUserId) => {
         if (sidebarUsers.some((user) => user._id === currentSelectedUserId)) {
           return currentSelectedUserId;
@@ -207,7 +260,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
         senderId === selectedUserId && newMessage.receiverId === currentUser._id;
 
       if (!belongsToSelectedConversation) {
-        // Keep unread state local to the sidebar until we add a backend read-receipt model later.
+        // Keep the sidebar responsive immediately, then let the next refresh reconcile with persisted state.
         setUnreadCounts((currentCounts) => ({
           ...currentCounts,
           [senderId]: (currentCounts[senderId] || 0) + 1,
@@ -216,6 +269,18 @@ function Home({ currentUser, onLogout, onSessionChange }) {
           ...currentActivity,
           [senderId]: Date.now(),
         }));
+        setUsers((currentUsers) =>
+          currentUsers.map((user) =>
+            user._id === senderId
+              ? {
+                  ...user,
+                  lastMessage: newMessage,
+                  lastActivityAt: newMessage.createdAt,
+                  unreadCount: (user.unreadCount || 0) + 1,
+                }
+              : user
+          )
+        );
         return;
       }
 
@@ -234,6 +299,18 @@ function Home({ currentUser, onLogout, onSessionChange }) {
         ...currentActivity,
         [senderId]: Date.now(),
       }));
+      setUsers((currentUsers) =>
+        currentUsers.map((user) =>
+          user._id === senderId
+            ? {
+                ...user,
+                lastMessage: newMessage,
+                lastActivityAt: newMessage.createdAt,
+                unreadCount: 0,
+              }
+            : user
+        )
+      );
       setTypingUserIds((currentIds) => currentIds.filter((id) => id !== senderId));
     }
 
@@ -259,6 +336,13 @@ function Home({ currentUser, onLogout, onSessionChange }) {
           messageIds.includes(message._id)
             ? { ...message, readAt }
             : message
+        )
+      );
+      setUsers((currentUsers) =>
+        currentUsers.map((user) =>
+          user._id === readerId && user.lastMessage && messageIds.includes(user.lastMessage._id)
+            ? { ...user, lastMessage: { ...user.lastMessage, readAt } }
+            : user
         )
       );
     }
@@ -323,12 +407,14 @@ function Home({ currentUser, onLogout, onSessionChange }) {
         .map((user) => ({
           id: user._id,
           name: user.fullName,
-          preview: `@${user.username}`,
-          time: "",
+          preview: typingUserIds.includes(user._id)
+            ? "Typing..."
+            : getMessagePreview(user.lastMessage, currentUser?._id) || `@${user.username}`,
+          time: formatRelativeTime(conversationActivity[user._id] || user.lastActivityAt),
           active: user._id === selectedUserId,
           isOnline: onlineUserSet.has(user._id),
-          lastActivityAt: conversationActivity[user._id] || 0,
-          unread: unreadCounts[user._id] || 0,
+          lastActivityAt: conversationActivity[user._id] || new Date(user.lastActivityAt || 0).getTime(),
+          unread: unreadCounts[user._id] ?? user.unreadCount ?? 0,
         }))
         .sort((firstUser, secondUser) => {
           if (firstUser.unread !== secondUser.unread) {
@@ -408,6 +494,17 @@ function Home({ currentUser, onLogout, onSessionChange }) {
         ...currentActivity,
         [selectedUserId]: Date.now(),
       }));
+      setUsers((currentUsers) =>
+        currentUsers.map((user) =>
+          user._id === selectedUserId
+            ? {
+                ...user,
+                lastMessage: newMessage,
+                lastActivityAt: newMessage.createdAt,
+              }
+            : user
+        )
+      );
       setDraftMessage("");
     } catch (error) {
       console.error("Error sending message", error);
