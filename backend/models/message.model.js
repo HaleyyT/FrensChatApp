@@ -27,6 +27,11 @@ const messageSchema = new mongoose.Schema({
     //mongoose shows the time messages sent
 }, {timestamps: true});
 
+messageSchema.index({ senderId: 1, receiverId: 1, createdAt: -1 });
+messageSchema.index({ receiverId: 1, readAt: 1, createdAt: -1 });
+messageSchema.index({ senderId: 1, createdAt: -1 });
+messageSchema.index({ receiverId: 1, createdAt: -1 });
+
 //creates model message with messageSchema
 const Message = mongoose.model("Message", messageSchema);
 

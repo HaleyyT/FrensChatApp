@@ -28,3 +28,4 @@ dist-ssr
 .env.*
 !.env.example
 cookies.txt
+PRODUCTION_REVIEW_TASKS.md

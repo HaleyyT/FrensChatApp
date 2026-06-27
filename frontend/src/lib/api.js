@@ -15,7 +15,16 @@ export async function apiRequest(path, options = {}) {
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(data.error || data.message || "Request failed");
+    const errorMessage =
+      (typeof data.error === "object" && data.error?.message) ||
+      data.error ||
+      data.message ||
+      "Request failed";
+    const error = new Error(errorMessage);
+    error.status = response.status;
+    error.code = typeof data.error === "object" ? data.error?.code : undefined;
+    error.details = typeof data.error === "object" ? data.error?.details : undefined;
+    throw error;
   }
 
   return data;
@@ -43,8 +52,20 @@ export function getUsers() {
   return apiRequest("/user/");
 }
 
-export function getMessages(userId) {
-  return apiRequest(`/message/${userId}`);
+export function getMessages(userId, options = {}) {
+  const searchParams = new URLSearchParams();
+
+  if (options.limit) {
+    searchParams.set("limit", String(options.limit));
+  }
+
+  if (options.before) {
+    searchParams.set("before", options.before);
+  }
+
+  const query = searchParams.toString();
+
+  return apiRequest(`/message/${userId}${query ? `?${query}` : ""}`);
 }
 
 export function sendMessage(userId, message) {

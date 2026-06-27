@@ -49,6 +49,7 @@ const sharedFiles = [
   { name: "Brand notes.fig", type: "Design file", size: "4 MB" },
   { name: "Client recap.docx", type: "Document", size: "1 MB" },
 ];
+const MESSAGE_PAGE_SIZE = 50;
 
 function formatMessageTime(timestamp) {
   if (!timestamp) {
@@ -125,8 +126,19 @@ function Home({ currentUser, onLogout, onSessionChange }) {
   const [unreadCounts, setUnreadCounts] = useState({});
   const [conversationActivity, setConversationActivity] = useState({});
   const [typingUserIds, setTypingUserIds] = useState([]);
+  const [messagePaging, setMessagePaging] = useState({ hasMore: false, nextCursor: null });
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const messageEndRef = useRef(null);
   const stopTypingTimeoutRef = useRef(null);
+  const handleSessionExpiry = useCallback(async (error) => {
+    if (error?.status !== 401) {
+      return false;
+    }
+
+    await onSessionChange?.({ force: true });
+    setSendError("Your session expired. Please sign in again.");
+    return true;
+  }, [onSessionChange]);
 
   const loadUsers = useCallback(async ({ showLoading = false } = {}) => {
     if (isPreviewMode) {
@@ -172,6 +184,10 @@ function Home({ currentUser, onLogout, onSessionChange }) {
         return sidebarUsers[0]?._id || "";
       });
     } catch (error) {
+      if (await handleSessionExpiry(error)) {
+        return;
+      }
+
       console.error("Error loading users", error);
     } finally {
       if (showLoading) {
@@ -180,7 +196,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
         setIsRefreshingUsers(false);
       }
     }
-  }, [isPreviewMode]);
+  }, [handleSessionExpiry, isPreviewMode]);
 
   useEffect(() => {
     if (isPreviewMode) {
@@ -195,6 +211,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
     setUnreadCounts({});
     setConversationActivity({});
     setTypingUserIds([]);
+    setMessagePaging({ hasMore: false, nextCursor: null });
 
     loadUsers({ showLoading: true });
   }, [currentUser?._id, isPreviewMode, loadUsers]);
@@ -222,11 +239,16 @@ function Home({ currentUser, onLogout, onSessionChange }) {
       setIsLoadingMessages(true);
 
       try {
-        const data = await getMessages(selectedUserId);
-        setLiveMessages(data);
+        const data = await getMessages(selectedUserId, { limit: MESSAGE_PAGE_SIZE });
+        setLiveMessages(data.messages || []);
+        setMessagePaging(data.paging || { hasMore: false, nextCursor: null });
 
         await markMessagesRead(selectedUserId);
       } catch (error) {
+        if (await handleSessionExpiry(error)) {
+          return;
+        }
+
         console.error("Error loading messages", error);
       } finally {
         setIsLoadingMessages(false);
@@ -235,7 +257,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
 
     // Reload the conversation every time a different sidebar user is selected.
     loadMessages();
-  }, [isPreviewMode, selectedUserId]);
+  }, [handleSessionExpiry, isPreviewMode, selectedUserId]);
 
   useEffect(() => {
     if (isPreviewMode || !selectedUserId) {
@@ -293,6 +315,11 @@ function Home({ currentUser, onLogout, onSessionChange }) {
         return [...currentMessages, newMessage];
       });
       markMessagesRead(senderId).catch((error) => {
+        if (error?.status === 401) {
+          onSessionChange?.({ force: true });
+          return;
+        }
+
         console.error("Error marking messages as read", error);
       });
       setConversationActivity((currentActivity) => ({
@@ -319,7 +346,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
     return () => {
       socket.off("newMessage", handleIncomingMessage);
     };
-  }, [currentUser, isPreviewMode, selectedUserId, socket]);
+  }, [currentUser, isPreviewMode, onSessionChange, selectedUserId, socket]);
 
   useEffect(() => {
     if (isPreviewMode || !socket || !currentUser?._id) {
@@ -460,6 +487,10 @@ function Home({ currentUser, onLogout, onSessionChange }) {
       await logout();
       onLogout();
     } catch (error) {
+      if (await handleSessionExpiry(error)) {
+        return;
+      }
+
       console.error("Error logging out", error);
     }
   }
@@ -507,10 +538,44 @@ function Home({ currentUser, onLogout, onSessionChange }) {
       );
       setDraftMessage("");
     } catch (error) {
+      if (await handleSessionExpiry(error)) {
+        return;
+      }
+
       console.error("Error sending message", error);
       setSendError(error.message);
     } finally {
       setIsSendingMessage(false);
+    }
+  }
+
+  async function handleLoadOlderMessages() {
+    if (isPreviewMode || !selectedUserId || !messagePaging.nextCursor || isLoadingOlderMessages) {
+      return;
+    }
+
+    setIsLoadingOlderMessages(true);
+
+    try {
+      const data = await getMessages(selectedUserId, {
+        limit: MESSAGE_PAGE_SIZE,
+        before: messagePaging.nextCursor,
+      });
+
+      setLiveMessages((currentMessages) => {
+        const existingIds = new Set(currentMessages.map((message) => message._id));
+        const olderMessages = (data.messages || []).filter((message) => !existingIds.has(message._id));
+        return [...olderMessages, ...currentMessages];
+      });
+      setMessagePaging(data.paging || { hasMore: false, nextCursor: null });
+    } catch (error) {
+      if (await handleSessionExpiry(error)) {
+        return;
+      }
+
+      console.error("Error loading older messages", error);
+    } finally {
+      setIsLoadingOlderMessages(false);
     }
   }
 
@@ -717,6 +782,18 @@ function Home({ currentUser, onLogout, onSessionChange }) {
               </div>
 
               <div className="max-h-[46vh] min-h-[260px] space-y-5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
+                {!isPreviewMode && messagePaging.hasMore ? (
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={handleLoadOlderMessages}
+                      disabled={isLoadingOlderMessages}
+                      className="rounded-full border border-white/12 bg-white/6 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-200 transition hover:border-cyan-300/24 hover:bg-white/10 disabled:cursor-wait disabled:opacity-60"
+                    >
+                      {isLoadingOlderMessages ? "Loading..." : "Load earlier messages"}
+                    </button>
+                  </div>
+                ) : null}
                 {isLoadingMessages && !isPreviewMode ? (
                   <div className="rounded-[22px] border border-white/12 bg-white/7 px-4 py-4 text-sm font-medium text-slate-300">
                     Loading messages...

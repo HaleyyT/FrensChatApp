@@ -2,54 +2,52 @@ import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
 import User from "../models/user.models.js";
 import { getIO, isUserOnline } from "../socket/socket.js";
-import mongoose from "mongoose";
+import { createHttpError } from "../utils/httpError.js";
 
-const MAX_MESSAGE_LENGTH = 2000;
+function getConversationKey(firstUserId, secondUserId) {
+  return [firstUserId.toString(), secondUserId.toString()].sort().join(":");
+}
 
-export const sendMessage = async (req, res) => {
+export const sendMessage = async (req, res, next) => {
   try {
     const { message } = req.body;
     const { id: receiverId } = req.params;
-    const trimmedMessage = typeof message === "string" ? message.trim() : "";
+    const trimmedMessage = message;
 
     // MUST come from protectRoutes middleware
     const senderId = req.user?._id; 
 
     if (!senderId) {
-      return res.status(401).json({ error: "Unauthorized access" });
-    }
-    if (!trimmedMessage || !receiverId) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(receiverId)) {
-      return res.status(400).json({ error: "Invalid receiver id" });
+      throw createHttpError(401, "UNAUTHORIZED", "Unauthorized access");
     }
 
     if (receiverId === senderId.toString()) {
-      return res.status(400).json({ error: "Cannot send messages to yourself" });
-    }
-
-    if (trimmedMessage.length > MAX_MESSAGE_LENGTH) {
-      return res.status(400).json({ error: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer` });
+      throw createHttpError(400, "SELF_MESSAGE_FORBIDDEN", "Cannot send messages to yourself");
     }
 
     const receiver = await User.findById(receiverId).select("_id");
 
     if (!receiver) {
-      return res.status(404).json({ error: "Receiver not found" });
+      throw createHttpError(404, "RECEIVER_NOT_FOUND", "Receiver not found");
     }
 
-    // Find existing conversation between the two users
-    let conversation = await Conversation.findOne({
-      participants: { $all: [senderId, receiverId] },
-    });
+    const conversationKey = getConversationKey(senderId, receiverId);
+    let conversation = await Conversation.findOne({ conversationKey });
 
-    // Create if not exists
     if (!conversation) {
-      conversation = await Conversation.create({
-        participants: [senderId, receiverId],
+      const legacyConversation = await Conversation.findOne({
+        participants: { $all: [senderId, receiverId] },
       });
+
+      if (legacyConversation) {
+        legacyConversation.conversationKey = conversationKey;
+        conversation = await legacyConversation.save();
+      } else {
+        conversation = await Conversation.create({
+          conversationKey,
+          participants: [senderId, receiverId],
+        });
+      }
     }
 
     // Create + save message
@@ -71,22 +69,17 @@ export const sendMessage = async (req, res) => {
 
     return res.status(201).json(newMessage);
   } catch (error) {
-    console.log("Error in sendMessage controller", error.message);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
-export const markMessagesAsRead = async (req, res) => {
+export const markMessagesAsRead = async (req, res, next) => {
   try {
     const { id: otherUserId } = req.params;
     const readerId = req.user?._id;
 
     if (!readerId) {
-      return res.status(401).json({ error: "Unauthorized access" });
-    }
-
-    if (!mongoose.Types.ObjectId.isValid(otherUserId)) {
-      return res.status(400).json({ error: "Invalid user id" });
+      throw createHttpError(401, "UNAUTHORIZED", "Unauthorized access");
     }
 
     const readAt = new Date();
@@ -115,36 +108,50 @@ export const markMessagesAsRead = async (req, res) => {
 
     return res.status(200).json({ readMessageIds, readAt });
   } catch (error) {
-    console.log("Error in markMessagesAsRead controller", error.message);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };
 
-export const getMessages = async (req, res) => {
+export const getMessages = async (req, res, next) => {
   try {
     const { id: userToChatId } = req.params;
+    const { before, limit } = req.query;
     const senderId = req.user?._id;
 
     if (!senderId) {
-      return res.status(401).json({ error: "Unauthorized access" });
+      throw createHttpError(401, "UNAUTHORIZED", "Unauthorized access");
     }
 
-    if (!mongoose.Types.ObjectId.isValid(userToChatId)) {
-      return res.status(400).json({ error: "Invalid user id" });
+    const messageQuery = {
+      $or: [
+        { senderId, receiverId: userToChatId },
+        { senderId: userToChatId, receiverId: senderId },
+      ],
+    };
+
+    if (before) {
+      messageQuery.createdAt = { $lt: new Date(before) };
     }
 
-    // Find the shared conversation first, then populate the stored message references in order.
-    const conversation = await Conversation.findOne({
-      participants: { $all: [senderId, userToChatId] },
-    }).populate("message");
+    const messages = await Message.find(messageQuery)
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(limit + 1)
+      .lean();
 
-    if (!conversation) {
-      return res.status(200).json([]);
-    }
+    const hasMore = messages.length > limit;
+    const pagedMessages = hasMore ? messages.slice(0, limit) : messages;
+    const orderedMessages = pagedMessages.reverse();
+    const nextCursor = hasMore ? pagedMessages[pagedMessages.length - 1].createdAt.toISOString() : null;
 
-    return res.status(200).json(conversation.message);
+    return res.status(200).json({
+      messages: orderedMessages,
+      paging: {
+        limit,
+        hasMore,
+        nextCursor,
+      },
+    });
   } catch (error) {
-    console.log("Error in getMessages controller", error.message);
-    return res.status(500).json({ error: "Internal server error" });
+    next(error);
   }
 };

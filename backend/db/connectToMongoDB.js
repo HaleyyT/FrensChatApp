@@ -1,13 +1,11 @@
 import mongoose from "mongoose";
+import { loadConfig } from "../utils/config.js";
 
 const connectToMongoDB = async () => {
-    // Fail fast when required config is missing instead of starting a half-configured server.
-    if (!process.env.MONGO_URI) {
-        throw new Error("MONGO_URI is not set");
-    }
+    const { MONGO_URI } = loadConfig();
 
     try {
-        await mongoose.connect(process.env.MONGO_URI); 
+        await mongoose.connect(MONGO_URI); 
         console.log("Connected to mongoDB");
         console.log("Mongo host:", mongoose.connection.host);
         console.log("Mongo db:", mongoose.connection.name);

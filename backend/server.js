@@ -10,20 +10,21 @@ import cors from "cors";
 import { attachSocketServer } from "./socket/socket.js";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import { errorHandler, notFoundHandler } from "./middleWare/errorHandler.js";
+import { loadConfig } from "./utils/config.js";
 
 // Load environment variables before reading config such as PORT or CLIENT_URL.
 dotenv.config();
 
+const config = loadConfig();
 const app = express();
-const PORT = process.env.PORT || 5000;
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
-const allowedOrigins = CLIENT_URL.split(",").map((origin) => origin.trim());
+const { PORT, allowedOrigins } = config;
 const server = http.createServer(app);
 
 app.set("trust proxy", 1);
 
 app.use(helmet());
-app.use(express.json()); 
+app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
 
 app.use(cors({
@@ -59,6 +60,8 @@ app.get("/", (req, res) => {
 
 // Attach Socket.IO to the same HTTP server so REST and realtime events share one backend entry point.
 attachSocketServer(server, allowedOrigins);
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 async function start() {
   try {
