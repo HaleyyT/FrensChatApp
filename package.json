@@ -5,7 +5,10 @@
   "scripts": {
     "start": "node backend/server.js",
     "server": "nodemon backend/server.js",
-    "smoke": "node scripts/release-smoke.mjs"
+    "smoke": "node scripts/release-smoke.mjs",
+    "audit:prod": "npm audit --omit=dev",
+    "check:backend": "node scripts/check-backend.mjs",
+    "verify": "npm run audit:prod && npm run check:backend && npm --prefix frontend run lint && npm --prefix frontend run build"
   },
   "type": "module",
   "keywords": [],
