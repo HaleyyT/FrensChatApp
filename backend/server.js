@@ -1,67 +1,14 @@
-import express from "express";
-import http from "http";
 import dotenv from "dotenv";
-import cookieParser from "cookie-parser";
-import authRoutes from "./routes/auth.routes.js";
-import messageRoutes from "./routes/message.routes.js";
 import connectToMongoDB from "./db/connectToMongoDB.js";
-import userRoutes from "./routes/user.routes.js";
-import cors from "cors";
-import { attachSocketServer } from "./socket/socket.js";
-import helmet from "helmet";
-import rateLimit from "express-rate-limit";
-import { errorHandler, notFoundHandler } from "./middleWare/errorHandler.js";
 import { loadConfig } from "./utils/config.js";
+import { createApp } from "./app.js";
 
 // Load environment variables before reading config such as PORT or CLIENT_URL.
 dotenv.config();
 
 const config = loadConfig();
-const app = express();
 const { PORT, allowedOrigins } = config;
-const server = http.createServer(app);
-
-app.set("trust proxy", 1);
-
-app.use(helmet());
-app.use(express.json({ limit: "100kb" }));
-app.use(cookieParser());
-
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 50,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-const messageLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 120,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Keep public endpoints responsive while slowing brute-force login and message spam attempts.
-app.use("/api/auth", authLimiter);
-app.use("/api/message", messageLimiter);
-
-app.use("/api/auth", authRoutes);
-app.use("/api/message", messageRoutes);
-app.use("/api/user", userRoutes);
-
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
-
-// Attach Socket.IO to the same HTTP server so REST and realtime events share one backend entry point.
-attachSocketServer(server, allowedOrigins);
-app.use(notFoundHandler);
-app.use(errorHandler);
+const { server } = createApp({ allowedOrigins });
 
 async function start() {
   try {

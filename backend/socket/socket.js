@@ -26,6 +26,11 @@ function broadcastOnlineUsers() {
 }
 
 export function attachSocketServer(server, allowedOrigins) {
+  if (io) {
+    io.close();
+    onlineUserCounts.clear();
+  }
+
   io = new Server(server, {
     cors: {
       origin: allowedOrigins,
@@ -113,4 +118,13 @@ export function getIO() {
 
 export function isUserOnline(userId) {
   return onlineUserCounts.has(userId.toString());
+}
+
+export function resetSocketState() {
+  if (io) {
+    io.close();
+    io = undefined;
+  }
+
+  onlineUserCounts.clear();
 }
