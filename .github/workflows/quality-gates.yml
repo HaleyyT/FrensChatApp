@@ -40,6 +40,12 @@ jobs:
       - name: Check backend imports
         run: npm run check:backend
 
+      - name: Run backend integration tests
+        run: npm run test:backend
+
+      - name: Run socket realtime tests
+        run: npm run test:socket
+
       - name: Lint frontend
         run: npm --prefix frontend run lint
 
