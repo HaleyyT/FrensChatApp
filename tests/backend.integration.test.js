@@ -17,6 +17,12 @@ after(async () => {
   await destroyTestEnvironment(environment);
 });
 
+test("health check reports that the API is ready without authentication", async () => {
+  const response = await request(environment.app).get("/healthz").expect(200);
+
+  assert.deepEqual(response.body, { status: "ok" });
+});
+
 test("signup, restore session, logout, and reject protected route after logout", async () => {
   const agent = request.agent(environment.app);
 

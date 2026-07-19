@@ -64,6 +64,8 @@ Expected result:
 - the receiver can load the conversation and mark the message as read
 - both users can log out cleanly
 
+The smoke test first checks `GET /healthz`, then runs the authenticated two-user flow. Requests time out after 15 seconds by default, making an unreachable or sleeping backend easier to distinguish from an application failure.
+
 ## Pre-Deploy Environment Checks
 
 ### Render backend
@@ -107,6 +109,14 @@ Example:
 SMOKE_API_BASE_URL=https://your-backend-host.com/api npm run smoke
 ```
 
+To use a longer timeout for a cold-starting service, set `SMOKE_REQUEST_TIMEOUT_MS` explicitly:
+
+```bash
+SMOKE_API_BASE_URL=https://your-backend-host.com/api SMOKE_REQUEST_TIMEOUT_MS=30000 npm run smoke
+```
+
+The API base URL must end in `/api`; the script derives and checks the backend readiness URL at `/healthz` before creating smoke-test accounts.
+
 3. Manually confirm the browser can:
 
 - sign up
@@ -119,6 +129,30 @@ SMOKE_API_BASE_URL=https://your-backend-host.com/api npm run smoke
 
 4. Confirm cookies are being set correctly in the browser for production auth.
 5. Confirm the browser console is free of CORS, socket, or auth errors.
+
+## Production Troubleshooting
+
+### The frontend shows a backend configuration or timeout error
+
+1. Confirm both Vercel variables are present and point to the deployed backend:
+   - `VITE_API_BASE_URL=https://your-backend-host.com/api`
+   - `VITE_SOCKET_SERVER_URL=https://your-backend-host.com`
+2. Confirm the backend is ready directly:
+
+```bash
+curl -i https://your-backend-host.com/healthz
+```
+
+Expected result: `200` with `{ "status": "ok" }`.
+
+3. Run the deployed smoke test. Its timeout or endpoint-specific failure will identify whether the issue is readiness, authentication, or a later API operation.
+4. For a failed API response, capture the `x-request-id` response header or `error.requestId` response field and find the matching structured backend log entry. Do not share auth cookies or request bodies in support logs.
+
+### Login works but presence or typing does not
+
+1. Confirm `VITE_SOCKET_SERVER_URL` uses the backend origin without `/api`.
+2. Check backend logs for `socket_connection_rejected`, `socket_connected`, or `socket_error` events.
+3. Confirm `CLIENT_URL` matches the deployed frontend origin exactly, including its protocol.
 
 ## Rollback Checklist
 
@@ -162,4 +196,3 @@ SMOKE_API_BASE_URL=https://your-backend-host.com/api npm run smoke
 - rollback target commit
 - symptoms observed
 - commands/checks used to confirm recovery
-

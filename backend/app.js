@@ -53,6 +53,11 @@ export function createApp({
   app.use("/api/message", messageRoutes);
   app.use("/api/user", userRoutes);
 
+  // Load balancers and release tooling can use this unauthenticated route to confirm the API is ready.
+  app.get("/healthz", (req, res) => {
+    res.status(200).json({ status: "ok" });
+  });
+
   app.get("/", (req, res) => {
     res.send("Hello World!");
   });

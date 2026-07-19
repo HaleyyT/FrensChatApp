@@ -1,5 +1,41 @@
-const API_BASE_URL = process.env.SMOKE_API_BASE_URL || "http://127.0.0.1:5000/api";
+const DEFAULT_API_BASE_URL = "http://127.0.0.1:5000/api";
+const REQUEST_TIMEOUT_MS = Number(process.env.SMOKE_REQUEST_TIMEOUT_MS || 15000);
+const API_BASE_URL = (process.env.SMOKE_API_BASE_URL || DEFAULT_API_BASE_URL).replace(/\/$/, "");
 const RUN_ID = Date.now().toString(36);
+
+if (!Number.isInteger(REQUEST_TIMEOUT_MS) || REQUEST_TIMEOUT_MS < 1000) {
+  throw new Error("SMOKE_REQUEST_TIMEOUT_MS must be an integer of at least 1000 milliseconds");
+}
+
+function getHealthUrl() {
+  const apiUrl = new URL(API_BASE_URL);
+  const apiPath = apiUrl.pathname.replace(/\/$/, "");
+
+  if (!apiPath.endsWith("/api")) {
+    throw new Error("SMOKE_API_BASE_URL must end with /api");
+  }
+
+  apiUrl.pathname = `${apiPath.slice(0, -4)}/healthz`;
+  apiUrl.search = "";
+  return apiUrl.toString();
+}
+
+async function fetchWithTimeout(url, options = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error(`Request timed out after ${REQUEST_TIMEOUT_MS}ms: ${url}`);
+    }
+
+    throw new Error(`Could not reach ${url}: ${error.message}`);
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
 
 class SessionClient {
   constructor(label) {
@@ -52,7 +88,7 @@ class SessionClient {
       headers.set("Cookie", cookieHeader);
     }
 
-    const response = await fetch(`${API_BASE_URL}${path}`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}${path}`, {
       ...options,
       headers,
     });
@@ -80,6 +116,12 @@ async function run() {
   const userB = new SessionClient("User B");
   const usernameA = `smoke_a_${RUN_ID}`;
   const usernameB = `smoke_b_${RUN_ID}`;
+
+  printStep(`Checking API readiness at ${getHealthUrl()}`);
+  let healthResponse = await fetchWithTimeout(getHealthUrl());
+  assert(healthResponse.status === 200, `Expected /healthz to return 200, received ${healthResponse.status}`);
+  const health = await healthResponse.json().catch(() => ({}));
+  assert(health.status === "ok", "Expected /healthz to return status: ok");
 
   printStep(`Signing up ${usernameA}`);
   let result = await userA.request("/auth/signup", {
@@ -184,4 +226,3 @@ run().catch((error) => {
   console.error(`FAIL: ${error.message}`);
   process.exit(1);
 });
-
