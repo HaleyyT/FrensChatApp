@@ -4,7 +4,7 @@ import Home from "./pages/home/home";
 import Login from "./pages/login/login";
 import SignUp from "./pages/signup/signUp";
 import { SocketProvider } from "./context/SocketProvider";
-import { getCurrentUser, logout } from "./lib/api";
+import { getCurrentUser, getFrontendConfigError, logout } from "./lib/api";
 
 function App() {
   // Keep the authenticated user at the app level so every screen can react to login/logout.
@@ -12,6 +12,7 @@ function App() {
   const [authView, setAuthView] = useState("login");
   const [showWorkspacePreview, setShowWorkspacePreview] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [sessionError, setSessionError] = useState("");
   const lastSessionCheckRef = useRef(0);
   const sessionRequestRef = useRef(null);
 
@@ -36,10 +37,12 @@ function App() {
 
           return user;
         });
+        setSessionError("");
         setShowWorkspacePreview(false);
       })
-      .catch(() => {
+      .catch((error) => {
         setCurrentUser(null);
+        setSessionError(error.message || "Could not restore your session.");
       })
       .finally(() => {
         setIsCheckingSession(false);
@@ -57,6 +60,14 @@ function App() {
 
   useEffect(() => {
     // Ask the backend if the browser still has a valid auth cookie after refresh.
+    const configError = getFrontendConfigError();
+
+    if (configError) {
+      setSessionError(configError);
+      setIsCheckingSession(false);
+      return;
+    }
+
     restoreSession({ force: true });
   }, [restoreSession]);
 
@@ -139,6 +150,30 @@ function App() {
           </button>
           </div>
         </div>
+
+        {!currentUser && sessionError ? (
+          <div className="pointer-events-none fixed inset-x-0 top-24 z-20 flex justify-center px-4">
+            <div className="pointer-events-auto max-w-[720px] rounded-[24px] border border-amber-300/20 bg-amber-400/10 px-5 py-4 text-sm font-medium text-amber-50 shadow-[0_24px_60px_rgba(120,53,15,0.18)] backdrop-blur-xl">
+              <p>{sessionError}</p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSessionError("");
+                    setIsCheckingSession(true);
+                    restoreSession({ force: true });
+                  }}
+                  className="rounded-full border border-amber-200/30 bg-amber-200/12 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-50 transition hover:bg-amber-200/18"
+                >
+                  Retry session check
+                </button>
+                <span className="self-center text-xs uppercase tracking-[0.18em] text-amber-100/70">
+                  If this is deployed, confirm `VITE_API_BASE_URL` and `VITE_SOCKET_SERVER_URL`.
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {currentUser ? (
           <Home

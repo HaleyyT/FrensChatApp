@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import User from "../models/user.models.js";
+import { errorDetails, logInfo, logWarn } from "../utils/logger.js";
 
 let io;
 const onlineUserCounts = new Map();
@@ -39,29 +40,38 @@ export function attachSocketServer(server, allowedOrigins) {
   });
 
   io.use(async (socket, next) => {
+    const rejectConnection = (reason, error) => {
+      logWarn("socket_connection_rejected", {
+        reason,
+        origin: socket.handshake.headers.origin,
+        ...(error ? errorDetails(error) : {}),
+      });
+      return next(new Error("Unauthorized socket connection"));
+    };
+
     try {
       const token = decodeURIComponent(getCookieValue(socket.handshake.headers.cookie, "jwt"));
 
       if (!token) {
-        return next(new Error("Unauthorized socket connection"));
+        return rejectConnection("missing_auth_cookie");
       }
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       if (!decoded?.userId) {
-        return next(new Error("Unauthorized socket connection"));
+        return rejectConnection("missing_user_id");
       }
 
       const user = await User.findById(decoded.userId).select("_id");
 
       if (!user) {
-        return next(new Error("Unauthorized socket connection"));
+        return rejectConnection("user_not_found");
       }
 
       socket.userId = user._id.toString();
       return next();
-    } catch {
-      return next(new Error("Unauthorized socket connection"));
+    } catch (error) {
+      return rejectConnection("invalid_auth_cookie", error);
     }
   });
 
@@ -73,7 +83,12 @@ export function attachSocketServer(server, allowedOrigins) {
 
     const nextConnectionCount = (onlineUserCounts.get(userId) || 0) + 1;
     onlineUserCounts.set(userId, nextConnectionCount);
+    logInfo("socket_connected", { userId, socketId: socket.id, connectionCount: nextConnectionCount });
     broadcastOnlineUsers();
+
+    socket.on("error", (error) => {
+      logWarn("socket_error", { userId, socketId: socket.id, ...errorDetails(error) });
+    });
 
     socket.on("typing", ({ receiverId } = {}) => {
       if (!receiverId) {
@@ -92,7 +107,7 @@ export function attachSocketServer(server, allowedOrigins) {
       io.to(receiverId).emit("stopTyping", { senderId: userId });
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason) => {
       const currentConnectionCount = onlineUserCounts.get(userId) || 0;
 
       if (currentConnectionCount <= 1) {
@@ -101,6 +116,12 @@ export function attachSocketServer(server, allowedOrigins) {
         onlineUserCounts.set(userId, currentConnectionCount - 1);
       }
 
+      logInfo("socket_disconnected", {
+        userId,
+        socketId: socket.id,
+        reason,
+        connectionCount: onlineUserCounts.get(userId) || 0,
+      });
       broadcastOnlineUsers();
     });
   });

@@ -29,3 +29,4 @@ dist-ssr
 !.env.example
 cookies.txt
 PRODUCTION_REVIEW_TASKS.md
+PRIVATE_APP_INFRASTRUCTURE_NOTES.md

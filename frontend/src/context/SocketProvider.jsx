@@ -18,6 +18,13 @@ export function SocketProvider({ currentUser, children }) {
       return;
     }
 
+    if (!SOCKET_SERVER_URL) {
+      console.warn("Socket connection skipped because VITE_SOCKET_SERVER_URL is not configured.");
+      setOnlineUserIds([]);
+      setSocket(null);
+      return;
+    }
+
     // Keep one shared socket connection per signed-in user so realtime features do not create duplicates.
     const nextSocket = io(SOCKET_SERVER_URL, {
       withCredentials: true,

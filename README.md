@@ -256,6 +256,12 @@ VITE_API_BASE_URL=https://your-backend-host.com/api
 VITE_SOCKET_SERVER_URL=https://your-backend-host.com
 ```
 
+Important:
+
+- In deployed environments, both frontend variables must be set explicitly.
+- The frontend only falls back to `localhost` during local development.
+- If they are missing in production, the app now shows a clear configuration error instead of hanging on `Restoring session...`
+
 Deployment checklist:
 
 - Set `CLIENT_URL` to the deployed frontend origin exactly.

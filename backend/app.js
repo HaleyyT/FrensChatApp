@@ -9,6 +9,7 @@ import messageRoutes from "./routes/message.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import { attachSocketServer } from "./socket/socket.js";
 import { errorHandler, notFoundHandler } from "./middleWare/errorHandler.js";
+import { requestLogger } from "./middleWare/requestLogger.js";
 
 export function createApp({
   allowedOrigins = ["http://localhost:5173"],
@@ -22,6 +23,7 @@ export function createApp({
   app.use(helmet());
   app.use(express.json({ limit: "100kb" }));
   app.use(cookieParser());
+  app.use(requestLogger);
 
   app.use(cors({
     origin: allowedOrigins,
