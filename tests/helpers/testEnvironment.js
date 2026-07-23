@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { createApp } from "../../backend/app.js";
 import { resetSocketState } from "../../backend/socket/socket.js";
+import { setServiceReady } from "../../backend/utils/readiness.js";
 
 export async function createTestEnvironment() {
   process.env.NODE_ENV = "test";
@@ -13,6 +14,7 @@ export async function createTestEnvironment() {
   await mongoose.connect(mongoServer.getUri(), {
     dbName: "alpine-chat-test",
   });
+  setServiceReady(true);
 
   const { app, server } = createApp({
     allowedOrigins: ["http://localhost:5173"],
@@ -75,6 +77,7 @@ export async function destroyTestEnvironment({ server, mongoServer }) {
   }
 
   resetSocketState();
+  setServiceReady(false);
   await mongoose.disconnect();
   await mongoServer.stop();
 }

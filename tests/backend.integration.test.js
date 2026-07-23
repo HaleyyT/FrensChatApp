@@ -2,6 +2,7 @@ import test, { after, before, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
 import { createTestEnvironment, clearDatabase, destroyTestEnvironment } from "./helpers/testEnvironment.js";
+import { setServiceReady } from "../backend/utils/readiness.js";
 
 let environment;
 
@@ -17,7 +18,12 @@ after(async () => {
   await destroyTestEnvironment(environment);
 });
 
-test("health check reports that the API is ready without authentication", async () => {
+test("health check reports readiness without authentication", async () => {
+  setServiceReady(false);
+  const unavailableResponse = await request(environment.app).get("/healthz").expect(503);
+  assert.deepEqual(unavailableResponse.body, { status: "unavailable" });
+
+  setServiceReady(true);
   const response = await request(environment.app).get("/healthz").expect(200);
 
   assert.deepEqual(response.body, { status: "ok" });

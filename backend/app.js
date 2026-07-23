@@ -10,6 +10,7 @@ import userRoutes from "./routes/user.routes.js";
 import { attachSocketServer } from "./socket/socket.js";
 import { errorHandler, notFoundHandler } from "./middleWare/errorHandler.js";
 import { requestLogger } from "./middleWare/requestLogger.js";
+import { isServiceReady } from "./utils/readiness.js";
 
 export function createApp({
   allowedOrigins = ["http://localhost:5173"],
@@ -55,7 +56,11 @@ export function createApp({
 
   // Load balancers and release tooling can use this unauthenticated route to confirm the API is ready.
   app.get("/healthz", (req, res) => {
-    res.status(200).json({ status: "ok" });
+    if (!isServiceReady()) {
+      return res.status(503).json({ status: "unavailable" });
+    }
+
+    return res.status(200).json({ status: "ok" });
   });
 
   app.get("/", (req, res) => {

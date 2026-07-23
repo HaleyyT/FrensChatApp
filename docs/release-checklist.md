@@ -145,6 +145,8 @@ curl -i https://your-backend-host.com/healthz
 
 Expected result: `200` with `{ "status": "ok" }`.
 
+During startup or graceful shutdown, the endpoint intentionally returns `503` with `{ "status": "unavailable" }`; wait for the service to become ready before running the smoke test.
+
 3. Run the deployed smoke test. Its timeout or endpoint-specific failure will identify whether the issue is readiness, authentication, or a later API operation.
 4. For a failed API response, capture the `x-request-id` response header or `error.requestId` response field and find the matching structured backend log entry. Do not share auth cookies or request bodies in support logs.
 
