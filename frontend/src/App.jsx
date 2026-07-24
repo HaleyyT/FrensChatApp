@@ -42,6 +42,13 @@ function App() {
       })
       .catch((error) => {
         setCurrentUser(null);
+
+        // A missing or expired cookie is the expected signed-out state, not a deployment failure.
+        if (error.status === 401) {
+          setSessionError("");
+          return;
+        }
+
         setSessionError(error.message || "Could not restore your session.");
       })
       .finally(() => {
