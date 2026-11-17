@@ -55,6 +55,7 @@ export function loadConfig(env = process.env) {
   const CLIENT_URL = env.CLIENT_URL || "http://localhost:5173";
   const MONGO_URI = env.MONGO_URI || "";
   const JWT_SECRET = env.JWT_SECRET || "";
+  const redisUrl = env.REDIS_URL;
 
   if (!VALID_NODE_ENVS.has(NODE_ENV)) {
     throw new Error("NODE_ENV must be one of development, production, or test");
@@ -93,5 +94,28 @@ export function loadConfig(env = process.env) {
     allowedOrigins: parseAllowedOrigins(CLIENT_URL),
     MONGO_URI,
     JWT_SECRET,
+    messageQuota: redisUrl ? parseMessageQuota(redisUrl, env) : null,
   };
+}
+
+function parseMessageQuota(url, env) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("REDIS_URL must be a valid Redis URL");
+  }
+  if (!["redis:", "rediss:"].includes(parsed.protocol) || !parsed.hostname) {
+    throw new Error("REDIS_URL must use redis:// or rediss:// and include a hostname");
+  }
+
+  const limit = Number(env.MESSAGE_QUOTA_LIMIT ?? 10);
+  const windowMs = Number(env.MESSAGE_QUOTA_WINDOW_MS ?? 10000);
+  if (!Number.isInteger(limit) || limit < 1 || limit > 1000) {
+    throw new Error("MESSAGE_QUOTA_LIMIT must be an integer between 1 and 1000");
+  }
+  if (!Number.isInteger(windowMs) || windowMs < 1000 || windowMs > 3600000) {
+    throw new Error("MESSAGE_QUOTA_WINDOW_MS must be an integer between 1000 and 3600000");
+  }
+  return { url, limit, windowMs };
 }

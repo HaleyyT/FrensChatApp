@@ -6,18 +6,24 @@ import { createApp } from "./app.js";
 import { logError, logInfo } from "./utils/logger.js";
 import { setServiceReady } from "./utils/readiness.js";
 import { resetSocketState } from "./socket/socket.js";
+import { createMessageQuota } from "./utils/messageQuota.js";
 
 // Load environment variables before reading config such as PORT or CLIENT_URL.
 dotenv.config();
 
 const config = loadConfig();
 const { PORT, allowedOrigins } = config;
-const { server } = createApp({ allowedOrigins });
+const messageQuota = config.messageQuota ? createMessageQuota(config.messageQuota) : null;
+const { server } = createApp({ allowedOrigins, messageQuota });
 let isShuttingDown = false;
 
 async function start() {
   try {
     await connectToMongoDB();
+    if (isShuttingDown) return;
+    messageQuota?.connect().catch(() => {
+      if (!isShuttingDown) logError("message_quota_redis_connect_failed");
+    });
     setServiceReady(true);
     server.listen(PORT, () => {
       logInfo("server_started", { port: PORT });
@@ -61,6 +67,7 @@ async function shutdown(signal) {
       await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
     }
 
+    messageQuota?.close();
     await mongoose.disconnect();
     logInfo("server_shutdown_completed", { signal });
     clearTimeout(forceExitTimeout);

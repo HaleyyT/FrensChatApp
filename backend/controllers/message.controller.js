@@ -31,6 +31,21 @@ export const sendMessage = async (req, res, next) => {
       throw createHttpError(404, "RECEIVER_NOT_FOUND", "Receiver not found");
     }
 
+    const quota = req.app.locals.messageQuota;
+    if (quota) {
+      let retryAfter;
+      try {
+        retryAfter = await quota.retryAfterSeconds(senderId.toString());
+      } catch {
+        throw createHttpError(503, "MESSAGE_QUOTA_UNAVAILABLE", "Message quota temporarily unavailable");
+      }
+
+      if (retryAfter > 0) {
+        res.set("Retry-After", String(retryAfter));
+        throw createHttpError(429, "MESSAGE_QUOTA_EXCEEDED", "Message send limit reached");
+      }
+    }
+
     const conversationKey = getConversationKey(senderId, receiverId);
     let conversation = await Conversation.findOne({ conversationKey });
 

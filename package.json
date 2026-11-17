@@ -8,8 +8,9 @@
     "smoke": "node scripts/release-smoke.mjs",
     "audit:prod": "npm audit --omit=dev",
     "check:backend": "node scripts/check-backend.mjs",
-    "test:backend": "node --test --test-concurrency=1 tests/backend.integration.test.js",
+    "test:backend": "node --test --test-concurrency=1 tests/backend.integration.test.js tests/message-quota-config.test.js",
     "test:socket": "node --test --test-concurrency=1 tests/socket.realtime.test.js",
+    "test:quota": "node scripts/day1-message-quota.mjs",
     "test": "npm run test:backend && npm run test:socket",
     "verify": "npm run audit:prod && npm run check:backend && npm run test && npm --prefix frontend run lint && npm --prefix frontend run build"
   },
@@ -28,6 +29,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.17.0",
+    "redis": "^5.12.4",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
