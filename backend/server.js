@@ -7,6 +7,8 @@ import { logError, logInfo } from "./utils/logger.js";
 import { setServiceReady } from "./utils/readiness.js";
 import { resetSocketState } from "./socket/socket.js";
 import { createMessageQuota } from "./utils/messageQuota.js";
+import Message from "./models/message.model.js";
+import ModerationOutbox from "./models/moderationOutbox.model.js";
 
 // Load environment variables before reading config such as PORT or CLIENT_URL.
 dotenv.config();
@@ -14,12 +16,17 @@ dotenv.config();
 const config = loadConfig();
 const { PORT, allowedOrigins } = config;
 const messageQuota = config.messageQuota ? createMessageQuota(config.messageQuota) : null;
-const { server } = createApp({ allowedOrigins, messageQuota });
+const moderationEnabled = process.env.MODERATION_ENABLED === "true";
+if (moderationEnabled && config.NODE_ENV === "production") {
+  throw new Error("The local moderation demo is unavailable in production");
+}
+const { server } = createApp({ allowedOrigins, messageQuota, moderationEnabled });
 let isShuttingDown = false;
 
 async function start() {
   try {
     await connectToMongoDB();
+    if (moderationEnabled) await Promise.all([Message.init(), ModerationOutbox.init()]);
     if (isShuttingDown) return;
     messageQuota?.connect().catch(() => {
       if (!isShuttingDown) logError("message_quota_redis_connect_failed");

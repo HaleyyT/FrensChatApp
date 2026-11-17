@@ -123,6 +123,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
   const [draftMessage, setDraftMessage] = useState("");
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [sendError, setSendError] = useState("");
+  const [sendNotice, setSendNotice] = useState("");
   const [unreadCounts, setUnreadCounts] = useState({});
   const [conversationActivity, setConversationActivity] = useState({});
   const [typingUserIds, setTypingUserIds] = useState([]);
@@ -503,6 +504,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
     }
 
     setSendError("");
+    setSendNotice("");
     setIsSendingMessage(true);
 
     try {
@@ -518,6 +520,11 @@ function Home({ currentUser, onLogout, onSessionChange }) {
       clearTimeout(stopTypingTimeoutRef.current);
 
       const newMessage = await sendMessage(selectedUserId, trimmedMessage);
+      if (newMessage.moderationStatus === "pending") {
+        setDraftMessage("");
+        setSendNotice("Message queued for review.");
+        return;
+      }
 
       // Add the saved message immediately so the chat feels responsive without waiting for a reload.
       setLiveMessages((currentMessages) => [...currentMessages, newMessage]);
@@ -874,6 +881,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
                       {sendError}
                     </div>
                   ) : null}
+                  {sendNotice ? <p role="status" className="mt-3 px-2 text-sm text-slate-200">{sendNotice}</p> : null}
 
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-2">
                     <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-300">

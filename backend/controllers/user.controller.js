@@ -1,5 +1,6 @@
 import User from "../models/user.models.js";
 import Message from "../models/message.model.js";
+import { visibleMessages } from "../utils/moderation.js";
 
 export const getUsersForSidebar = async (req, res, next) => {
     try {
@@ -9,6 +10,7 @@ export const getUsersForSidebar = async (req, res, next) => {
         const users = await User.find({ _id: { $ne: loggedInUserId } }).select("-password").lean();
         const userIds = new Set(users.map((user) => user._id.toString()));
         const recentMessages = await Message.find({
+            ...visibleMessages,
             $or: [
                 { senderId: loggedInUserId },
                 { receiverId: loggedInUserId },

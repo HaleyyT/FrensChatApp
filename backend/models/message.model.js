@@ -19,6 +19,10 @@ const messageSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    moderationStatus: { type: String, enum: ["pending", "visible", "quarantined"] },
+    moderationEventId: { type: String, select: false },
+    moderationReason: { type: String, select: false },
+    moderationDecidedAt: { type: Date, select: false },
     readAt:{
         type: Date,
         default: null

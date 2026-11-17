@@ -16,12 +16,14 @@ export function createApp({
   allowedOrigins = ["http://localhost:5173"],
   disableRateLimit = false,
   messageQuota = null,
+  moderationEnabled = false,
 } = {}) {
   const app = express();
   const server = http.createServer(app);
 
   app.set("trust proxy", 1);
   app.locals.messageQuota = messageQuota;
+  app.locals.moderationEnabled = moderationEnabled;
 
   app.use(helmet());
   app.use(express.json({ limit: "100kb" }));

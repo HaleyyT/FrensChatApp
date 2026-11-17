@@ -3,6 +3,7 @@ import Message from "../models/message.model.js";
 import User from "../models/user.models.js";
 import { getIO, isUserOnline } from "../socket/socket.js";
 import { createHttpError } from "../utils/httpError.js";
+import { queueMessageForModeration, visibleMessages } from "../utils/moderation.js";
 
 function getConversationKey(firstUserId, secondUserId) {
   return [firstUserId.toString(), secondUserId.toString()].sort().join(":");
@@ -47,6 +48,11 @@ export const sendMessage = async (req, res, next) => {
         }
         throw createHttpError(429, "MESSAGE_QUOTA_EXCEEDED", "Message send limit reached");
       }
+    }
+
+    if (req.app.locals.moderationEnabled) {
+      const queued = await queueMessageForModeration({ senderId, receiverId, message: trimmedMessage });
+      return res.status(202).json(queued);
     }
 
     const conversationKey = getConversationKey(senderId, receiverId);
@@ -102,6 +108,7 @@ export const markMessagesAsRead = async (req, res, next) => {
 
     const readAt = new Date();
     const unreadMessages = await Message.find({
+      ...visibleMessages,
       senderId: otherUserId,
       receiverId: readerId,
       readAt: null,
@@ -141,6 +148,7 @@ export const getMessages = async (req, res, next) => {
     }
 
     const messageQuery = {
+      ...visibleMessages,
       $or: [
         { senderId, receiverId: userToChatId },
         { senderId: userToChatId, receiverId: senderId },

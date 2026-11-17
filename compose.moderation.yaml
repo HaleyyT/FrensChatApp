@@ -1,0 +1,50 @@
+x-moderation-env: &moderation-env
+  MONGO_URI: mongodb://mongo:27017/frenschat_moderation?replicaSet=rs0
+  MODERATION_ENABLED: "true"
+
+services:
+  api-a:
+    environment: *moderation-env
+  api-b:
+    environment: *moderation-env
+  mongo:
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "try { rs.status(); } catch (e) { if (e.code === 94) rs.initiate({_id:'rs0',members:[{_id:0,host:'mongo:27017'}]}); } quit(db.hello().isWritablePrimary ? 0 : 1)"]
+  kafka:
+    image: apache/kafka:4.1.1
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_RETENTION_HOURS: 24
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 3s
+      timeout: 10s
+      retries: 20
+  worker:
+    image: frenschat-day1:${FRENSCHAT_IMAGE_TAG:-current}
+    pull_policy: never
+    init: true
+    profiles: ["moderation"]
+    restart: on-failure
+    command: ["node", "backend/moderation-worker.js"]
+    environment:
+      <<: *moderation-env
+      NODE_ENV: development
+      JWT_SECRET: local-compose-synthetic-demo-only
+      MODERATION_KAFKA_BROKERS: kafka:9092
+    depends_on:
+      mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
