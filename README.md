@@ -1,12 +1,42 @@
-# Real-Time Chat App (Full-stack) — In Progress
+# FrensChat | Distributed Messaging & Trust & Safety Backend
 
-A full-stack chat application focused on building production-style authentication and a clean, scalable backend foundation for real-time messaging.
+A real-time chat app with two backend reliability demos. Redis enforces a shared sender quota across Express replicas. Kafka processes moderation events from a MongoDB transactional outbox.
+
+## Measured results
+
+Three matched **local, synthetic** burst trials per configuration used two Express replicas and 50 concurrent requests per trial from one authenticated sender. The shared quota was 10 messages per sender per 10 seconds.
+
+| Measure | Baseline | Redis | Redis + Kafka |
+| --- | ---: | ---: | ---: |
+| Above-quota writes across three trials | 120 | 0 | 0 |
+| Normal-paced sends accepted and visible | 60/60 | 60/60 | 60/60 |
+
+In the crash-replay test, a queued message survived a broker outage. The worker was then stopped after its MongoDB decision and before committing the Kafka offset. The replacement replayed the same partition and offset, leaving **zero duplicate decisions**.
+
+```mermaid
+flowchart LR
+    C["Authenticated client"] --> A["Express APIs ×2"]
+    A --> R["Redis shared quota and cooldown"]
+    R -->|"Allowed"| M["MongoDB pending message and outbox"]
+    M --> P["Outbox publisher"]
+    P --> K["Kafka moderation.events"]
+    K --> W["Moderation worker"]
+    W -->|"Conditional decision"| M
+    W -->|"Malformed event"| D["Kafka moderation.dlq"]
+    A -->|"Visible history"| C
+```
+
+- [Benchmark method and reproduction commands](docs/day4-results.md) · [Raw benchmark JSON](docs/evidence/day4-benchmarks.json)
+- [63-second terminal replay](docs/evidence/day4-demo.cast) · Play with `asciinema play docs/evidence/day4-demo.cast`.
+- [Local test coverage](docs/test-coverage.md) · **94.66% backend** and **93.39% frontend** line coverage.
+
+The local demo uses one Redis server, one Kafka broker, and one MongoDB replica-set member. The workload measures quota correctness and recovery under controlled conditions. Maximum throughput and cross-replica Socket.IO delivery are outside the benchmark.
 
 ![Current workspace UI](docs/images/workspace-ui.png)
 
 ## Licence
 
-This project is licensed under the MIT License. See [LICENSE](/Users/haleytran/Desktop/chatApp/LICENSE) for details.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## Current Milestone 
 
@@ -24,8 +54,6 @@ Auth and the real-time chat flow are working end-to-end with:
 - unread counts for inactive conversations
 - timestamps, auto-scroll, and Enter-to-send composer UX
 - instant UI updates across active user sessions
-
-The local distributed demo measures a shared Redis quota across two API replicas and exercises Kafka moderation through a broker outage and worker restart. See the [benchmark results and reproducible demo](docs/day4-results.md).
 
 ## Best Demo Method
 
@@ -411,9 +439,11 @@ Look for:
 - Online presence
 - Typing indicators
 - Unread counts for inactive conversations
+- Paginated chat history
 - Message timestamps, auto-scroll, and Enter-to-send
 - Shared socket state through a frontend socket context/provider
 - Polished workspace and login UI
+- [Public chat demo](https://alpine-chat.vercel.app)
 
 ### In Progress
 
@@ -422,9 +452,7 @@ Look for:
 
 ### Planned
 
-- Pagination for chat history
 - Better frontend validation and error states
-- Public deployment
 
 ## Notes (Security + Dev Environment)
 
