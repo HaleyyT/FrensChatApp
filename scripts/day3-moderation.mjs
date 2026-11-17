@@ -9,7 +9,9 @@ const exec = promisify(execFile);
 const base = "http://127.0.0.1:5101";
 const runId = randomBytes(6).toString("hex");
 const compose = (...args) => exec("docker", [
-  "compose", "-p", "frenschat-day3", "-f", "compose.yaml", "-f", "compose.moderation.yaml",
+  "compose", "-p", process.env.FRENSCHAT_MODERATION_TEST_PROJECT || "frenschat-day3",
+  "-f", "compose.yaml", "-f", "compose.moderation.yaml",
+  ...(process.env.FRENSCHAT_COVERAGE_VOLUME ? ["-f", "compose.coverage.yaml"] : []),
   "--profile", "moderation", ...args,
 ], { timeout: 55000 });
 

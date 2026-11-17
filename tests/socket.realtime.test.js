@@ -2,6 +2,8 @@ import test, { after, before, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
 import { io as createSocketClient } from "socket.io-client";
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 import {
   clearDatabase,
   createTestEnvironment,
@@ -125,6 +127,48 @@ test("socket middleware rejects unauthenticated connections", async () => {
   const error = await waitForEvent(socket, "connect_error");
   assert.match(error.message, /Unauthorized socket connection/);
   socket.close();
+});
+
+test("signed sockets require an existing account and reject invalid cookies", async () => {
+  const secret = process.env.JWT_SECRET;
+  for (const cookie of [
+    "jwt=%broken",
+    `jwt=${jwt.sign({}, secret)}`,
+    `jwt=${jwt.sign({ userId: new mongoose.Types.ObjectId().toString() }, secret)}`,
+  ]) {
+    const socket = createAuthedSocket(cookie);
+    try {
+      const error = await waitForEvent(socket, "connect_error");
+      assert.equal(error.message, "Unauthorized socket connection");
+      assert.equal(socket.connected, false);
+    } finally {
+      socket.close();
+    }
+  }
+});
+
+test("closing one tab preserves presence and stopTyping only reaches the addressed user", async (t) => {
+  const sender = await signUpUser({ fullName: "Multi Tab", username: "multi_tab", gender: "female" });
+  const receiver = await signUpUser({ fullName: "Observer", username: "observer", gender: "male" });
+  const observer = createAuthedSocket(receiver.cookie);
+  const first = createAuthedSocket(sender.cookie);
+  const second = createAuthedSocket(sender.cookie);
+  t.after(() => [observer, first, second].forEach((socket) => socket.close()));
+  await Promise.all([observer, first, second].map((socket) => waitForEvent(socket, "onlineUsers")));
+
+  const stillOnline = waitForEvent(observer, "onlineUsers");
+  first.close();
+  assert.ok((await stillOnline).includes(sender.user._id));
+
+  const stopped = waitForEvent(observer, "stopTyping");
+  const ownEvent = expectNoEvent(second, "stopTyping", 200);
+  second.emit("stopTyping", { receiverId: receiver.user._id });
+  assert.deepEqual(await stopped, { senderId: sender.user._id });
+  await ownEvent;
+
+  const offline = waitForEvent(observer, "onlineUsers");
+  second.close();
+  assert.ok(!(await offline).includes(sender.user._id));
 });
 
 test("typing events go only to the intended receiver", async () => {

@@ -12,8 +12,9 @@
     "test:socket": "node --test --test-concurrency=1 tests/socket.realtime.test.js",
     "test:quota": "node scripts/day1-message-quota.mjs",
     "test:moderation": "node scripts/day3-moderation.mjs",
+    "coverage:backend": "node scripts/backend-coverage.mjs",
     "test": "npm run test:backend && npm run test:socket",
-    "verify": "npm run audit:prod && npm run check:backend && npm run test && npm --prefix frontend run lint && npm --prefix frontend run build"
+    "verify": "npm run audit:prod && npm run check:backend && npm run test && npm --prefix frontend run coverage && npm --prefix frontend run lint && npm --prefix frontend run build"
   },
   "type": "module",
   "keywords": [],
@@ -35,6 +36,7 @@
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "c8": "^12.0.0",
     "mongodb-memory-server": "^11.2.0",
     "nodemon": "^3.1.11",
     "socket.io-client": "^4.8.3",

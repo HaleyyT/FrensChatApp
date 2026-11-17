@@ -1,6 +1,10 @@
 import test, { after, before, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import User from "../backend/models/user.models.js";
+import Message from "../backend/models/message.model.js";
 import { createTestEnvironment, clearDatabase, destroyTestEnvironment } from "./helpers/testEnvironment.js";
 import { setServiceReady } from "../backend/utils/readiness.js";
 
@@ -27,6 +31,18 @@ test("health check reports readiness without authentication", async () => {
   const response = await request(environment.app).get("/healthz").expect(200);
 
   assert.deepEqual(response.body, { status: "ok" });
+});
+
+test("CORS exposes credentialed responses only to configured origins and unknown routes are structured", async () => {
+  const allowed = await request(environment.app).get("/").set("Origin", "http://localhost:5173").expect(200);
+  assert.equal(allowed.headers["access-control-allow-origin"], "http://localhost:5173");
+  assert.equal(allowed.headers["access-control-allow-credentials"], "true");
+  const denied = await request(environment.app).get("/").set("Origin", "https://other.invalid").expect(200);
+  assert.equal(denied.headers["access-control-allow-origin"], undefined);
+  const missing = await request(environment.app).get("/api/unknown").expect(404);
+  assert.equal(missing.body.error.code, "NOT_FOUND");
+  assert.ok(missing.headers["x-request-id"]);
+  assert.equal(missing.body.error.requestId, missing.headers["x-request-id"]);
 });
 
 test("signup, restore session, logout, and reject protected route after logout", async () => {
@@ -185,4 +201,84 @@ test("protected message routes reject malformed ids and self-messaging", async (
     .expect(400);
 
   assert.equal(selfMessageResponse.body.error.code, "SELF_MESSAGE_FORBIDDEN");
+});
+
+const credentials = (username) => ({
+  fullName: "Coverage Test", username, password: "secret12", confirmPassword: "secret12", gender: "female",
+});
+
+test("login normalizes usernames, protects credentials, and rejects duplicate accounts", async () => {
+  const user = credentials("coverage_login");
+  const agent = request.agent(environment.app);
+  await agent.post("/api/auth/signup").send(user).expect(201);
+  const duplicate = await agent.post("/api/auth/signup").send(user).expect(400);
+  assert.equal(duplicate.body.error.code, "USERNAME_TAKEN");
+  assert.equal(await User.countDocuments({ username: user.username }), 1);
+  const response = await agent.post("/api/auth/login")
+    .send({ username: " COVERAGE_LOGIN ", password: user.password }).expect(200);
+  assert.equal(response.body.username, user.username);
+  assert.equal(response.body.password, undefined);
+  assert.match(response.headers["set-cookie"][0], /HttpOnly/i);
+  assert.notEqual((await User.findOne({ username: user.username })).password, user.password);
+});
+
+test("invalid, expired, and orphaned sessions never grant protected access", async () => {
+  const secret = process.env.JWT_SECRET;
+  const userId = new mongoose.Types.ObjectId().toString();
+  for (const [token, code] of [
+    ["invalid", "UNAUTHORIZED"],
+    [jwt.sign({}, secret), "INVALID_TOKEN"],
+    [jwt.sign({ userId }, secret, { expiresIn: -1 }), "UNAUTHORIZED"],
+    [jwt.sign({ userId }, secret), "USER_NOT_FOUND"],
+  ]) {
+    const response = await request(environment.app).get("/api/auth/me").set("Cookie", `jwt=${token}`).expect(401);
+    assert.equal(response.body.error.code, code);
+  }
+});
+
+test("malformed inputs return stable codes and cannot create messages", async () => {
+  const agent = request.agent(environment.app);
+  const payload = credentials("validation");
+  for (const [change, code] of [
+    [{ fullName: "" }, "MISSING_REQUIRED_FIELDS"],
+    [{ username: "bad name" }, "INVALID_USERNAME"],
+    [{ gender: "unknown" }, "INVALID_GENDER"],
+    [{ password: "short" }, "INVALID_PASSWORD"],
+    [{ confirmPassword: "different" }, "PASSWORD_MISMATCH"],
+  ]) {
+    const response = await agent.post("/api/auth/signup").send({ ...payload, ...change }).expect(400);
+    assert.equal(response.body.error.code, code);
+  }
+  const missing = await agent.post("/api/auth/login").send({}).expect(400);
+  assert.equal(missing.body.error.code, "MISSING_CREDENTIALS");
+  await agent.post("/api/auth/signup").send(payload).expect(201);
+  const other = new mongoose.Types.ObjectId().toString();
+  for (const [message, status, code] of [
+    [" ", 400, "INVALID_MESSAGE"], ["x".repeat(2001), 400, "MESSAGE_TOO_LONG"], ["ok", 404, "RECEIVER_NOT_FOUND"],
+  ]) {
+    const response = await agent.post(`/api/message/send/${other}`).send({ message }).expect(status);
+    assert.equal(response.body.error.code, code);
+  }
+  for (const [query, code] of [[{ limit: 101 }, "INVALID_LIMIT"], [{ before: "invalid" }, "INVALID_CURSOR"]]) {
+    const response = await agent.get(`/api/message/${other}`).query(query).expect(400);
+    assert.equal(response.body.error.code, code);
+  }
+  assert.equal(await Message.countDocuments(), 0);
+});
+
+test("third parties cannot read or mark a conversation between two other accounts", async () => {
+  const agents = Array.from({ length: 3 }, () => request.agent(environment.app));
+  const ids = [];
+  for (const [index, agent] of agents.entries()) {
+    ids.push((await agent.post("/api/auth/signup").send(credentials(`isolated_${index}`)).expect(201)).body._id);
+  }
+  const [sender, receiver, thirdParty] = agents;
+  const sent = await sender.post(`/api/message/send/${ids[1]}`).send({ message: "Participant-only message" }).expect(201);
+  const history = await thirdParty.get(`/api/message/${ids[0]}`).expect(200);
+  assert.deepEqual(history.body.messages, []);
+  const read = await thirdParty.patch(`/api/message/read/${ids[0]}`).expect(200);
+  assert.deepEqual(read.body.readMessageIds, []);
+  assert.equal((await Message.findById(sent.body._id)).readAt, null);
+  assert.deepEqual((await receiver.patch(`/api/message/read/${ids[0]}`).expect(200)).body.readMessageIds, [sent.body._id]);
+  assert.deepEqual((await receiver.patch(`/api/message/read/${ids[0]}`).expect(200)).body.readMessageIds, []);
 });
