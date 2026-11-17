@@ -94,11 +94,11 @@ export function loadConfig(env = process.env) {
     allowedOrigins: parseAllowedOrigins(CLIENT_URL),
     MONGO_URI,
     JWT_SECRET,
-    messageQuota: redisUrl ? parseMessageQuota(redisUrl, env) : null,
+    messageQuota: redisUrl ? parseMessageQuota(redisUrl, env, JWT_SECRET) : null,
   };
 }
 
-function parseMessageQuota(url, env) {
+function parseMessageQuota(url, env, secret) {
   let parsed;
   try {
     parsed = new URL(url);
@@ -117,5 +117,17 @@ function parseMessageQuota(url, env) {
   if (!Number.isInteger(windowMs) || windowMs < 1000 || windowMs > 3600000) {
     throw new Error("MESSAGE_QUOTA_WINDOW_MS must be an integer between 1000 and 3600000");
   }
-  return { url, limit, windowMs };
+  let repeat;
+  if (env.MESSAGE_REPEAT_LIMIT) {
+    const repeatLimit = Number(env.MESSAGE_REPEAT_LIMIT);
+    const repeatWindowMs = Number(env.MESSAGE_REPEAT_WINDOW_MS ?? 10000);
+    if (!Number.isInteger(repeatLimit) || repeatLimit < 1 || repeatLimit > limit) {
+      throw new Error("MESSAGE_REPEAT_LIMIT must be an integer between 1 and MESSAGE_QUOTA_LIMIT");
+    }
+    if (!Number.isInteger(repeatWindowMs) || repeatWindowMs < 1000 || repeatWindowMs > 60000) {
+      throw new Error("MESSAGE_REPEAT_WINDOW_MS must be an integer between 1000 and 60000");
+    }
+    repeat = { limit: repeatLimit, windowMs: repeatWindowMs, secret };
+  }
+  return { url, limit, windowMs, ...(repeat && { repeat }) };
 }

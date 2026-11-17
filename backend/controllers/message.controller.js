@@ -33,15 +33,18 @@ export const sendMessage = async (req, res, next) => {
 
     const quota = req.app.locals.messageQuota;
     if (quota) {
-      let retryAfter;
+      let decision;
       try {
-        retryAfter = await quota.retryAfterSeconds(senderId.toString());
+        decision = await quota.check(senderId.toString(), trimmedMessage);
       } catch {
         throw createHttpError(503, "MESSAGE_QUOTA_UNAVAILABLE", "Message quota temporarily unavailable");
       }
 
-      if (retryAfter > 0) {
-        res.set("Retry-After", String(retryAfter));
+      if (decision.retryAfter > 0) {
+        res.set("Retry-After", String(decision.retryAfter));
+        if (decision.repeated) {
+          throw createHttpError(429, "MESSAGE_REPEAT_COOLDOWN", "Repeated message cooldown active");
+        }
         throw createHttpError(429, "MESSAGE_QUOTA_EXCEEDED", "Message send limit reached");
       }
     }

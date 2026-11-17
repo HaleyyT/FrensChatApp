@@ -9,6 +9,8 @@ x-api: &api
     JWT_SECRET: local-compose-synthetic-demo-only
     CLIENT_URL: http://localhost:5173
     REDIS_URL: ${FRENSCHAT_REDIS_URL-redis://redis:6379}
+    MESSAGE_REPEAT_LIMIT: ${MESSAGE_REPEAT_LIMIT:-}
+    MESSAGE_REPEAT_WINDOW_MS: ${MESSAGE_REPEAT_WINDOW_MS:-10000}
   depends_on:
     mongo:
       condition: service_healthy

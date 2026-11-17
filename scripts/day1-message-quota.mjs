@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
+import { io } from "socket.io-client";
 
 const mode = process.argv[2];
-assert.ok(["baseline", "redis", "outage", "recovery"].includes(mode), "Use baseline, redis, outage, or recovery");
+assert.ok(["baseline", "redis", "repeat", "outage", "recovery"].includes(mode), "Use baseline, redis, repeat, outage, or recovery");
 // Use only the loopback ports published by the synthetic Compose stack.
 const origins = ["http://127.0.0.1:5101", "http://127.0.0.1:5102"];
 const attempts = 50;
@@ -69,7 +70,54 @@ function p95(results) {
 const sender = await account("burst");
 const recipient = await account("recv");
 
-if (mode === "outage" || mode === "recovery") {
+if (mode === "repeat") {
+  const secondRecipient = await account("recv2");
+  const events = [];
+  const socket = io(origins[1], {
+    extraHeaders: { Cookie: secondRecipient.cookie },
+    transports: ["websocket"],
+    reconnection: false,
+    timeout: 3000,
+  });
+  socket.on("newMessage", (message) => events.push(message._id));
+  try {
+    await new Promise((resolve, reject) => {
+      socket.once("connect", resolve);
+      socket.once("connect_error", reject);
+    });
+    const first = await send(0, sender, recipient, { message: "Synthetic repeat" });
+    const second = await send(1, sender, secondRecipient, { message: " SYNTHETIC   REPEAT " });
+    assert.equal(first.status, 201);
+    assert.equal(second.status, 201);
+    const blocked = await Promise.all(
+      Array.from({ length: 8 }, (_, index) =>
+        send(index % 2, sender, index % 2 ? secondRecipient : recipient, { message: "synthetic repeat" })
+      )
+    );
+    for (const result of blocked) {
+      assert.equal(result.status, 429);
+      assert.equal(result.data.error.code, "MESSAGE_REPEAT_COOLDOWN");
+      assert.ok(result.retryAfter >= 1 && result.retryAfter <= 10);
+    }
+    const legitimate = [];
+    for (let index = 0; index < 5; index++) {
+      const result = await send(index % 2, sender, secondRecipient, { message: `Distinct synthetic text ${index}` });
+      assert.equal(result.status, 201);
+      legitimate.push(result);
+    }
+    const expectedEvents = [second.data._id, legitimate[1].data._id, legitimate[3].data._id];
+    for (let attempt = 0; events.length < expectedEvents.length && attempt < 40; attempt++) await delay(25);
+    assert.deepEqual(events, expectedEvents);
+    assert.equal((await history(sender, recipient)).length, 1);
+    assert.equal((await history(sender, secondRecipient)).length, 6);
+    await delay(windowMs + 100);
+    assert.equal((await send(1, sender, secondRecipient, { message: "synthetic repeat" })).status, 201);
+    console.log(JSON.stringify({ repeatBlocked: 8, repeatAttemptsAfterThreshold: 8, distinctAccepted: 5,
+      distinctAttempts: 5, sameNodeSocketDeliveries: expectedEvents.length, cooldownRollover: true }));
+  } finally {
+    socket.disconnect();
+  }
+} else if (mode === "outage" || mode === "recovery") {
   if (mode === "recovery") assert.equal((await send(0, recipient, sender)).status, 201);
   const results = await Promise.all(origins.map((_, node) => send(node, sender, recipient)));
   const expectedStatus = mode === "outage" ? 503 : 201;

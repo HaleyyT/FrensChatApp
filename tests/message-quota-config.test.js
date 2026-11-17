@@ -35,3 +35,10 @@ test("invalid quota settings are rejected without leaking connection credentials
   assert.throws(() => loadConfig({ ...env, REDIS_URL, MESSAGE_QUOTA_LIMIT: "0" }), /MESSAGE_QUOTA_LIMIT/);
   assert.throws(() => loadConfig({ ...env, REDIS_URL, MESSAGE_QUOTA_WINDOW_MS: "999" }), /MESSAGE_QUOTA_WINDOW_MS/);
 });
+
+test("repeat policy is opt-in and bounded by the sender quota", () => {
+  const REDIS_URL = "redis://localhost";
+  assert.equal(loadConfig({ ...env, REDIS_URL, MESSAGE_REPEAT_LIMIT: "" }).messageQuota.repeat, undefined);
+  assert.equal(loadConfig({ ...env, REDIS_URL, MESSAGE_REPEAT_LIMIT: "2" }).messageQuota.repeat.limit, 2);
+  assert.throws(() => loadConfig({ ...env, REDIS_URL, MESSAGE_REPEAT_LIMIT: "11" }), /MESSAGE_REPEAT_LIMIT/);
+});
