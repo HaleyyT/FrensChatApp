@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - redis-kafka-upgrade
       - "feat/**"
       - "fix/**"
       - "chore/**"
@@ -37,6 +38,9 @@ jobs:
       - name: Audit production dependencies
         run: npm run audit:prod
 
+      - name: Audit frontend production dependencies
+        run: npm --prefix frontend audit --omit=dev
+
       - name: Check backend imports
         run: npm run check:backend
 
@@ -51,3 +55,33 @@ jobs:
 
       - name: Build frontend
         run: npm --prefix frontend run build
+
+  distributed-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify shared Redis quota and repeat cooldown
+        run: |
+          docker compose -p frenschat-day2 up --build --wait
+          npm run test:quota -- redis
+          MESSAGE_REPEAT_LIMIT=2 docker compose -p frenschat-day2 up -d --wait
+          npm run test:quota -- repeat
+      - name: Stop Redis test stack
+        if: always()
+        run: docker compose -p frenschat-day2 stop
+      - name: Verify Kafka outage, replay, and dead-letter handling
+        run: |
+          docker compose -p frenschat-day3 -f compose.yaml -f compose.moderation.yaml up --build --wait
+          npm run test:moderation
+      - name: Report Kafka test logs on failure
+        if: failure()
+        run: docker compose -p frenschat-day3 -f compose.yaml -f compose.moderation.yaml --profile moderation logs --tail 40 worker kafka
+      - name: Stop Kafka test stack
+        if: always()
+        run: docker compose -p frenschat-day3 -f compose.yaml -f compose.moderation.yaml --profile moderation stop

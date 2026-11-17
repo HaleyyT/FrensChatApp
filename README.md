@@ -25,6 +25,8 @@ Auth and the real-time chat flow are working end-to-end with:
 - timestamps, auto-scroll, and Enter-to-send composer UX
 - instant UI updates across active user sessions
 
+The local distributed demo measures a shared Redis quota across two API replicas and exercises Kafka moderation through a broker outage and worker restart. See the [benchmark results and reproducible demo](docs/day4-results.md).
+
 ## Best Demo Method
 
 Recommended demo flow:
