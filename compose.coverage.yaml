@@ -1,0 +1,15 @@
+x-coverage: &coverage
+  environment:
+    NODE_V8_COVERAGE: /coverage
+  volumes:
+    - coverage-data:/coverage
+
+services:
+  api-a: *coverage
+  api-b: *coverage
+  worker: *coverage
+
+volumes:
+  coverage-data:
+    external: true
+    name: ${FRENSCHAT_COVERAGE_VOLUME:?Set the isolated coverage volume}

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - redis-kafka-upgrade
       - "feat/**"
       - "fix/**"
       - "chore/**"
@@ -22,7 +23,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: |
             package-lock.json
@@ -37,6 +38,9 @@ jobs:
       - name: Audit production dependencies
         run: npm run audit:prod
 
+      - name: Audit frontend production dependencies
+        run: npm --prefix frontend audit --omit=dev
+
       - name: Check backend imports
         run: npm run check:backend
 
@@ -49,5 +53,32 @@ jobs:
       - name: Lint frontend
         run: npm --prefix frontend run lint
 
+      - name: Test frontend and enforce coverage
+        run: npm --prefix frontend run coverage
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+
       - name: Build frontend
         run: npm --prefix frontend run build
+
+  distributed-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Verify Redis and Kafka behavior and enforce backend coverage
+        run: npm run coverage:backend -- --distributed
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: coverage/backend

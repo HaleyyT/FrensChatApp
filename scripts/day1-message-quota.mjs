@@ -4,7 +4,8 @@ import { setTimeout as delay } from "node:timers/promises";
 import { io } from "socket.io-client";
 
 const mode = process.argv[2];
-assert.ok(["baseline", "redis", "repeat", "outage", "recovery"].includes(mode), "Use baseline, redis, repeat, outage, or recovery");
+assert.ok(["baseline", "redis", "moderation", "repeat", "outage", "recovery"].includes(mode), "Unknown quota test mode");
+const benchmark = process.argv.includes("--benchmark");
 // Use only the loopback ports published by the synthetic Compose stack.
 const origins = ["http://127.0.0.1:5101", "http://127.0.0.1:5102"];
 const attempts = 50;
@@ -62,9 +63,10 @@ async function history(sender, recipient) {
   return result.data.messages.filter(({ senderId }) => senderId === sender.id);
 }
 
-function p95(results) {
+function latency(results) {
   const sorted = results.map(({ ms }) => ms).sort((a, b) => a - b);
-  return Number(sorted[Math.ceil(sorted.length * 0.95) - 1].toFixed(2));
+  const percentile = (fraction) => Number(sorted[Math.ceil(sorted.length * fraction) - 1].toFixed(2));
+  return { p50Ms: percentile(0.5), p95Ms: percentile(0.95), p99Ms: percentile(0.99) };
 }
 
 const sender = await account("burst");
@@ -137,19 +139,23 @@ if (mode === "repeat") {
     persisted,
   }, null, 2));
 } else {
+  const asyncModeration = mode === "moderation";
+  const acceptedStatus = asyncModeration ? 202 : 201;
   const normal = await account("normal");
-  assert.equal((await send(0, recipient, sender)).status, 201);
-  assert.equal((await send(1, recipient, normal)).status, 201);
+  assert.equal((await send(0, recipient, sender)).status, acceptedStatus);
+  assert.equal((await send(1, recipient, normal)).status, acceptedStatus);
   assert.equal((await send(0, null, recipient)).status, 401);
   assert.equal((await send(1, sender, recipient, { message: "" })).status, 400);
 
   const normalResults = [];
+  const normalStarted = performance.now();
   // One request per 1100 ms stays below the configured rolling quota.
   for (let index = 0; index < 20; index += 1) {
     if (index > 0) await delay(1100);
     normalResults.push(await send(index % 2, normal, recipient));
-    assert.equal(normalResults.at(-1).status, 201);
+    assert.equal(normalResults.at(-1).status, acceptedStatus);
   }
+  const normalSeconds = (performance.now() - normalStarted) / 1000;
 
   const burstStarted = performance.now();
   const results = await Promise.all(
@@ -159,19 +165,32 @@ if (mode === "repeat") {
   );
   const burstMs = Math.round(performance.now() - burstStarted);
   assert.ok(burstMs < windowMs, "Burst must complete inside one quota window");
-  const accepted = results.filter(({ status }) => status === 201);
+  const accepted = results.filter(({ status }) => status === acceptedStatus);
   const denied = results.filter(({ status }) => status === 429);
-  assert.equal(accepted.length, mode === "redis" ? quota : attempts);
+  assert.equal(accepted.length, mode === "baseline" ? attempts : quota);
   assert.equal(denied.length, attempts - accepted.length);
-  assert.ok(accepted.every(({ data }) => data.senderId === sender.id));
+  assert.ok(accepted.every(({ data }) =>
+    asyncModeration ? data.moderationStatus === "pending" : data.senderId === sender.id));
   assert.ok(denied.every(({ data, retryAfter }) =>
     data.error?.code === "MESSAGE_QUOTA_EXCEEDED" && retryAfter >= 1 && retryAfter <= 10
   ));
-  const persisted = await history(sender, recipient);
+  const httpFinished = performance.now();
+  let persisted = await history(sender, recipient);
+  if (asyncModeration) {
+    while (persisted.length < accepted.length && performance.now() - httpFinished < 12000) {
+      await delay(250);
+      persisted = await history(sender, recipient);
+    }
+  }
+  const postAckVisibilityMs = asyncModeration ? Math.round(performance.now() - httpFinished) : null;
   assert.deepEqual(new Set(persisted.map(({ _id }) => _id)), new Set(accepted.map(({ data }) => data._id)));
+  if (benchmark) {
+    assert.deepEqual(new Set((await history(normal, recipient)).map(({ _id }) => _id)),
+      new Set(normalResults.map(({ data }) => data._id)));
+  }
 
   let rolloverStatus = null;
-  if (mode === "redis") {
+  if (mode === "redis" && !benchmark) {
     const deniedAgain = await send(1, sender, recipient);
     assert.equal(deniedAgain.status, 429);
     assert.equal(deniedAgain.data.error.code, "MESSAGE_QUOTA_EXCEEDED");
@@ -186,7 +205,9 @@ if (mode === "repeat") {
     mode,
     apiInstances: origins.length,
     payloadBytes: Buffer.byteLength(payload),
-    normal: { successful: normalResults.length, spacingMs: 1100, p95Ms: p95(normalResults) },
+    normal: { successful: normalResults.length, spacingMs: 1100,
+      successfulRequestsPerSecond: Number((normalResults.length / normalSeconds).toFixed(3)),
+      ...latency(normalResults) },
     burst: {
       attempts,
       requestsPerInstance: attempts / 2,
@@ -194,6 +215,7 @@ if (mode === "repeat") {
       accepted: accepted.length,
       denied: denied.length,
       persisted: persisted.length,
+      postAckVisibilityMs,
       sendsAboveProposedQuota: accepted.length - quota,
     },
     rolloverStatus,

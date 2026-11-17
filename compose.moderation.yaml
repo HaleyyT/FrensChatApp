@@ -1,12 +1,15 @@
 x-moderation-env: &moderation-env
   MONGO_URI: mongodb://mongo:27017/frenschat_moderation?replicaSet=rs0
-  MODERATION_ENABLED: "true"
 
 services:
   api-a:
-    environment: *moderation-env
+    environment:
+      <<: *moderation-env
+      MODERATION_ENABLED: ${FRENSCHAT_MODERATION_ENABLED:-true}
   api-b:
-    environment: *moderation-env
+    environment:
+      <<: *moderation-env
+      MODERATION_ENABLED: ${FRENSCHAT_MODERATION_ENABLED:-true}
   mongo:
     command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
     healthcheck:
@@ -40,6 +43,7 @@ services:
     command: ["node", "backend/moderation-worker.js"]
     environment:
       <<: *moderation-env
+      MODERATION_ENABLED: "true"
       NODE_ENV: development
       JWT_SECRET: local-compose-synthetic-demo-only
       MODERATION_KAFKA_BROKERS: kafka:9092

@@ -9,7 +9,9 @@ const exec = promisify(execFile);
 const base = "http://127.0.0.1:5101";
 const runId = randomBytes(6).toString("hex");
 const compose = (...args) => exec("docker", [
-  "compose", "-p", "frenschat-day3", "-f", "compose.yaml", "-f", "compose.moderation.yaml",
+  "compose", "-p", process.env.FRENSCHAT_MODERATION_TEST_PROJECT || "frenschat-day3",
+  "-f", "compose.yaml", "-f", "compose.moderation.yaml",
+  ...(process.env.FRENSCHAT_COVERAGE_VOLUME ? ["-f", "compose.coverage.yaml"] : []),
   "--profile", "moderation", ...args,
 ], { timeout: 55000 });
 
@@ -123,6 +125,7 @@ try {
   assert.equal(pending.message.moderationStatus, "pending");
   assert.equal(pending.outbox.length, 1);
   assert.equal(pending.outbox[0].publishedAt, null);
+  console.error("Broker offline: accepted work is durable, pending, and hidden.");
   await compose("stop", "worker");
   await compose("up", "-d", "--wait", "kafka");
 
@@ -138,6 +141,7 @@ try {
   const { message: decided } = await database(messageId);
   assert.equal(decided.moderationStatus, "visible");
   assert.ok(decided.moderationDecidedAt);
+  console.error("Worker exited after MongoDB saved the decision and before committing its Kafka offset.");
 
   const replayStarted = performance.now();
   await compose("up", "-d", "worker");
@@ -149,6 +153,7 @@ try {
   }, "replay after crash");
   const restartToReplayMs = Math.round(performance.now() - replayStarted);
   assert.deepEqual((await database(messageId)).message, decided);
+  console.error("Replacement worker replayed the same partition and offset; the saved decision is unchanged.");
   const history = await request(`/message/${sender.id}`, { cookie: recipient.cookie });
   assert.equal(history.value.messages.filter((message) => message._id === messageId).length, 1);
 

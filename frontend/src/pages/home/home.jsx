@@ -130,6 +130,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
   const [messagePaging, setMessagePaging] = useState({ hasMore: false, nextCursor: null });
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const messageEndRef = useRef(null);
+  const historyScopeRef = useRef(null);
   const stopTypingTimeoutRef = useRef(null);
   const handleSessionExpiry = useCallback(async (error) => {
     if (error?.status !== 401) {
@@ -235,29 +236,37 @@ function Home({ currentUser, onLogout, onSessionChange }) {
     if (isPreviewMode || !selectedUserId) {
       return;
     }
+    const scope = {};
+    historyScopeRef.current = scope;
+    setLiveMessages([]);
+    setMessagePaging({ hasMore: false, nextCursor: null });
+    setIsLoadingOlderMessages(false);
 
     async function loadMessages() {
       setIsLoadingMessages(true);
 
       try {
         const data = await getMessages(selectedUserId, { limit: MESSAGE_PAGE_SIZE });
+        if (historyScopeRef.current !== scope) return;
         setLiveMessages(data.messages || []);
         setMessagePaging(data.paging || { hasMore: false, nextCursor: null });
 
         await markMessagesRead(selectedUserId);
       } catch (error) {
+        if (historyScopeRef.current !== scope) return;
         if (await handleSessionExpiry(error)) {
           return;
         }
 
         console.error("Error loading messages", error);
       } finally {
-        setIsLoadingMessages(false);
+        if (historyScopeRef.current === scope) setIsLoadingMessages(false);
       }
     }
 
     // Reload the conversation every time a different sidebar user is selected.
     loadMessages();
+    return () => { historyScopeRef.current = null; };
   }, [handleSessionExpiry, isPreviewMode, selectedUserId]);
 
   useEffect(() => {
@@ -561,6 +570,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
       return;
     }
 
+    const scope = historyScopeRef.current;
     setIsLoadingOlderMessages(true);
 
     try {
@@ -568,6 +578,7 @@ function Home({ currentUser, onLogout, onSessionChange }) {
         limit: MESSAGE_PAGE_SIZE,
         before: messagePaging.nextCursor,
       });
+      if (historyScopeRef.current !== scope) return;
 
       setLiveMessages((currentMessages) => {
         const existingIds = new Set(currentMessages.map((message) => message._id));
@@ -576,13 +587,14 @@ function Home({ currentUser, onLogout, onSessionChange }) {
       });
       setMessagePaging(data.paging || { hasMore: false, nextCursor: null });
     } catch (error) {
+      if (historyScopeRef.current !== scope) return;
       if (await handleSessionExpiry(error)) {
         return;
       }
 
       console.error("Error loading older messages", error);
     } finally {
-      setIsLoadingOlderMessages(false);
+      if (historyScopeRef.current === scope) setIsLoadingOlderMessages(false);
     }
   }
 

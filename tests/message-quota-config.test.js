@@ -42,3 +42,25 @@ test("repeat policy is opt-in and bounded by the sender quota", () => {
   assert.equal(loadConfig({ ...env, REDIS_URL, MESSAGE_REPEAT_LIMIT: "2" }).messageQuota.repeat.limit, 2);
   assert.throws(() => loadConfig({ ...env, REDIS_URL, MESSAGE_REPEAT_LIMIT: "11" }), /MESSAGE_REPEAT_LIMIT/);
 });
+
+test("startup rejects invalid deployment settings and unsafe fallback credentials", () => {
+  for (const [overrides, message] of [
+    [{ NODE_ENV: "unknown" }, /NODE_ENV/],
+    [{ PORT: "65536" }, /PORT/],
+    [{ MONGO_URI: "" }, /MONGO_URI is required/],
+    [{ JWT_SECRET: "" }, /JWT_SECRET is required/],
+    [{ JWT_SECRET: "short" }, /at least 16/],
+    [{ CLIENT_URL: " , " }, /at least one allowed origin/],
+    [{ CLIENT_URL: "invalid origin" }, /invalid URL/],
+    [{ CLIENT_URL: "ftp://localhost" }, /unsupported protocol/],
+    [{ REDIS_URL: "invalid redis" }, /valid Redis URL/],
+    [{ REDIS_URL: "redis://localhost", MESSAGE_REPEAT_LIMIT: "2", MESSAGE_REPEAT_WINDOW_MS: "60001" }, /MESSAGE_REPEAT_WINDOW_MS/],
+    [{ NODE_ENV: "production", MONGO_URI: "your_mongodb_connection_string" }, /MONGO_URI cannot/],
+    [{ NODE_ENV: "production", JWT_SECRET: "replace-me-with-a-secret" }, /JWT_SECRET cannot/],
+    [{ NODE_ENV: "production", CLIENT_URL: "https://example.com" }, /CLIENT_URL cannot/],
+  ]) {
+    assert.throws(() => loadConfig({ ...env, ...overrides }), message);
+  }
+  assert.deepEqual(loadConfig({ ...env, CLIENT_URL: " https://chat.invalid, http://localhost:5173 " }).allowedOrigins,
+    ["https://chat.invalid", "http://localhost:5173"]);
+});
