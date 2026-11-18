@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -61,11 +61,9 @@ try {
       compose(moderationProject, files, stop);
     }
     const captured = execFileSync("docker", ["run", "--rm", "-v", `${volume}:/coverage:ro`, "node:22-bookworm-slim",
-      "node", "-e", `const fs = require("fs");
-        for (const name of fs.readdirSync("/coverage")) {
-          const { result } = JSON.parse(fs.readFileSync("/coverage/" + name, "utf8"));
-          console.log(JSON.stringify({ result: result.filter(({url}) => url.startsWith("file:///app/backend/")) }));
-        }`], { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }).trim();
+      "node", "-e", readFileSync(new URL("./collect-container-coverage.cjs", import.meta.url), "utf8") +
+        "\nfor (const snapshot of collectCoverage('/coverage')) console.log(JSON.stringify(snapshot));",
+    ], { encoding: "utf8", maxBuffer: 8 * 1024 * 1024 }).trim();
     if (!captured) throw new Error("Docker processes did not write coverage");
     for (const [index, line] of captured.split("\n").entries()) {
       const coverage = JSON.parse(line);

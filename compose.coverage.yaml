@@ -1,12 +1,23 @@
 x-coverage: &coverage
-  environment:
-    NODE_V8_COVERAGE: /coverage
+  # Containers can reuse PIDs while sharing this volume.
+  entrypoint:
+    - /bin/sh
+    - -ec
+    - |
+      NODE_V8_COVERAGE=$$(mktemp -d /coverage/process.XXXXXXXX)
+      export NODE_V8_COVERAGE
+      exec docker-entrypoint.sh "$$@"
+    - coverage-entrypoint
   volumes:
     - coverage-data:/coverage
 
 services:
-  api-a: *coverage
-  api-b: *coverage
+  api-a:
+    <<: *coverage
+    command: ["node", "backend/server.js"]
+  api-b:
+    <<: *coverage
+    command: ["node", "backend/server.js"]
   worker: *coverage
 
 volumes:

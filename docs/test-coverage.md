@@ -2,7 +2,7 @@
 
 Run the fast checks with `npm run verify`. For the backend report that includes the real API and Kafka worker processes, run `npm run coverage:backend -- --distributed` with Docker Compose running and loopback ports 5101 and 5102 available. The frontend report can also be regenerated with `npm --prefix frontend run coverage`.
 
-The backend denominator is every JavaScript file under `backend/`, including unloaded files. The Docker runs use isolated MongoDB, Redis, and Kafka services and merge the API and worker V8 counters into the same report. The frontend denominator is all JavaScript and JSX under `frontend/src/`. React tests use jsdom, intercepted HTTP responses, and simulated socket events. The backend Socket.IO tests use real sockets. Lua behavior is exercised against Redis, but Lua itself is outside the JavaScript coverage denominator.
+The backend denominator is every JavaScript file under `backend/`, including unloaded files. The Docker runs use isolated MongoDB, Redis, and Kafka services and merge the API and worker V8 counters into the same report. Each container invocation writes into its own snapshot directory, and the collector identifies invalid snapshots by path. The frontend denominator is all JavaScript and JSX under `frontend/src/`. React tests use jsdom, intercepted HTTP responses, and simulated socket events. The backend Socket.IO tests use real sockets. Lua behavior is exercised against Redis, but Lua itself is outside the JavaScript coverage denominator.
 
 JSON summaries and LCOV reports are generated under `coverage/backend/` and `frontend/coverage/`. The workflow publishes each report as an artifact. Both the distributed backend and frontend gates require 90% lines, statements, and functions and 85% branches.
 
