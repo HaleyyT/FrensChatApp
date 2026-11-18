@@ -60,6 +60,8 @@ Three trials per configuration, measured on an arm64 Mac with 11 logical CPUs an
 
 The normal workload completed about 0.93–0.95 successful requests per second because the client deliberately paced its sends. Local variation and different HTTP acknowledgement semantics limit direct latency comparisons.
 
+A separate [end-to-end latency benchmark](realtime-latency.md) measures WebSocket delivery and read receipts on the same API replica.
+
 ## Fault and smoke checks
 
 - The two-user smoke passed against the upgraded Redis stack. The cooldown then blocked 8 of 8 post-threshold repeats, admitted 5 of 5 distinct sends, and allowed sends again after the cooldown.

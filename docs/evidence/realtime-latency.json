@@ -1,0 +1,882 @@
+{
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "logicalCpus": 11,
+    "memoryBytes": 19327352832,
+    "node": "v22.22.2"
+  },
+  "profile": {
+    "trialCount": 3,
+    "samplesPerTrial": 40,
+    "pacingMs": 1100,
+    "transport": "websocket",
+    "topology": "same API replica"
+  },
+  "completed": 120,
+  "metrics": {
+    "sendAckMs": {
+      "p50": 18.8125,
+      "p95": 29.267957999996725,
+      "p99": 52.55641600000672,
+      "max": 132.06870899999922,
+      "p95Under100": true
+    },
+    "deliveryMs": {
+      "p50": 17.716459000002942,
+      "p95": 27.7622080000001,
+      "p99": 51.96870800000033,
+      "max": 128.82270900000003,
+      "p95Under100": true
+    },
+    "readReceiptMs": {
+      "p50": 6.104000000006636,
+      "p95": 8.643500000005588,
+      "p99": 35.12820899999497,
+      "max": 95.57787500000268,
+      "p95Under100": true
+    },
+    "sendToReceiptMs": {
+      "p50": 23.568167000004905,
+      "p95": 38.47033399999782,
+      "p99": 62.960291999996116,
+      "max": 224.47912499999802,
+      "p95Under100": true
+    }
+  },
+  "trials": [
+    {
+      "trial": 1,
+      "metrics": {
+        "sendAckMs": {
+          "p50": 14.716416999999637,
+          "p95": 29.798125000001164,
+          "p99": 34.61045800000011,
+          "max": 34.61045800000011,
+          "p95Under100": true
+        },
+        "deliveryMs": {
+          "p50": 13.724958000002516,
+          "p95": 29.00604200000089,
+          "p99": 32.96970799999963,
+          "max": 32.96970799999963,
+          "p95Under100": true
+        },
+        "readReceiptMs": {
+          "p50": 5.7728339999957825,
+          "p95": 7.908249999999953,
+          "p99": 15.116125000000466,
+          "max": 15.116125000000466,
+          "p95Under100": true
+        },
+        "sendToReceiptMs": {
+          "p50": 20.059500000003027,
+          "p95": 38.47033399999782,
+          "p99": 40.992583000000195,
+          "max": 40.992583000000195,
+          "p95Under100": true
+        }
+      },
+      "samples": [
+        {
+          "sendAckMs": 27.600417000000107,
+          "deliveryMs": 24.795667000000094,
+          "readReceiptMs": 8.482208000000128,
+          "sendToReceiptMs": 33.408125000000155
+        },
+        {
+          "sendAckMs": 33.51091700000006,
+          "deliveryMs": 30.90537499999982,
+          "readReceiptMs": 7.908249999999953,
+          "sendToReceiptMs": 38.924958999999944
+        },
+        {
+          "sendAckMs": 28.908833000000413,
+          "deliveryMs": 25.04458300000033,
+          "readReceiptMs": 7.5009170000003,
+          "sendToReceiptMs": 32.63337500000034
+        },
+        {
+          "sendAckMs": 27.578209000000243,
+          "deliveryMs": 25.48962500000016,
+          "readReceiptMs": 7.083957999999257,
+          "sendToReceiptMs": 32.69999999999982
+        },
+        {
+          "sendAckMs": 34.61045800000011,
+          "deliveryMs": 32.96970799999963,
+          "readReceiptMs": 7.902667000000292,
+          "sendToReceiptMs": 40.992583000000195
+        },
+        {
+          "sendAckMs": 25.44604100000015,
+          "deliveryMs": 23.92950000000019,
+          "readReceiptMs": 7.094166999999288,
+          "sendToReceiptMs": 31.124582999999802
+        },
+        {
+          "sendAckMs": 13.15599999999904,
+          "deliveryMs": 11.775625000000218,
+          "readReceiptMs": 4.4082500000004075,
+          "sendToReceiptMs": 16.250292000000627
+        },
+        {
+          "sendAckMs": 29.798125000001164,
+          "deliveryMs": 29.00604200000089,
+          "readReceiptMs": 6.396040999999968,
+          "sendToReceiptMs": 35.45012500000121
+        },
+        {
+          "sendAckMs": 9.37133299999914,
+          "deliveryMs": 8.882707999999184,
+          "readReceiptMs": 3.8945000000003347,
+          "sendToReceiptMs": 12.817291999999725
+        },
+        {
+          "sendAckMs": 13.782208000000537,
+          "deliveryMs": 13.157583000000159,
+          "readReceiptMs": 5.133125000000291,
+          "sendToReceiptMs": 18.32550000000083
+        },
+        {
+          "sendAckMs": 19.51391700000022,
+          "deliveryMs": 18.525166999999783,
+          "readReceiptMs": 7.862499999999272,
+          "sendToReceiptMs": 26.445708999999624
+        },
+        {
+          "sendAckMs": 10.666250000000218,
+          "deliveryMs": 9.647333000000799,
+          "readReceiptMs": 5.440415999999459,
+          "sendToReceiptMs": 15.152416000000812
+        },
+        {
+          "sendAckMs": 24.66949999999997,
+          "deliveryMs": 22.683584000000337,
+          "readReceiptMs": 6.598917000001165,
+          "sendToReceiptMs": 29.41570900000079
+        },
+        {
+          "sendAckMs": 11.643291000000318,
+          "deliveryMs": 10.897291000001132,
+          "readReceiptMs": 5.5402089999988675,
+          "sendToReceiptMs": 16.47687500000029
+        },
+        {
+          "sendAckMs": 14.716416999999637,
+          "deliveryMs": 13.724958000002516,
+          "readReceiptMs": 6.265667000003305,
+          "sendToReceiptMs": 20.059500000003027
+        },
+        {
+          "sendAckMs": 11.574749999999767,
+          "deliveryMs": 10.875041999999667,
+          "readReceiptMs": 6.700042000000394,
+          "sendToReceiptMs": 17.616416999997455
+        },
+        {
+          "sendAckMs": 8.543208000002778,
+          "deliveryMs": 7.679416000002675,
+          "readReceiptMs": 4.323540999997931,
+          "sendToReceiptMs": 12.051916000000347
+        },
+        {
+          "sendAckMs": 9.776958000002196,
+          "deliveryMs": 9.257207999999082,
+          "readReceiptMs": 4.35491600000023,
+          "sendToReceiptMs": 13.643166000001656
+        },
+        {
+          "sendAckMs": 8.642916000000696,
+          "deliveryMs": 7.355999999999767,
+          "readReceiptMs": 3.2095829999998386,
+          "sendToReceiptMs": 10.634041000001162
+        },
+        {
+          "sendAckMs": 22.930083999999624,
+          "deliveryMs": 23.312459000000672,
+          "readReceiptMs": 15.116125000000466,
+          "sendToReceiptMs": 38.47033399999782
+        },
+        {
+          "sendAckMs": 5.607332999999926,
+          "deliveryMs": 5.199749999999767,
+          "readReceiptMs": 2.2738749999989523,
+          "sendToReceiptMs": 7.499665999999706
+        },
+        {
+          "sendAckMs": 7.806375000000116,
+          "deliveryMs": 7.359500000002299,
+          "readReceiptMs": 3.4416669999991427,
+          "sendToReceiptMs": 10.831874999999854
+        },
+        {
+          "sendAckMs": 7.987915999998222,
+          "deliveryMs": 7.540707999996812,
+          "readReceiptMs": 3.9470839999994496,
+          "sendToReceiptMs": 11.51537499999904
+        },
+        {
+          "sendAckMs": 12.480916000000434,
+          "deliveryMs": 11.643000000000029,
+          "readReceiptMs": 3.9494999999988067,
+          "sendToReceiptMs": 15.639415999998164
+        },
+        {
+          "sendAckMs": 12.898582999998325,
+          "deliveryMs": 11.836416999998619,
+          "readReceiptMs": 4.9465420000015,
+          "sendToReceiptMs": 16.825000000000728
+        },
+        {
+          "sendAckMs": 18.095374999997148,
+          "deliveryMs": 17.293249999998807,
+          "readReceiptMs": 6.376915999997436,
+          "sendToReceiptMs": 23.720415999996476
+        },
+        {
+          "sendAckMs": 9.326916999998502,
+          "deliveryMs": 8.664833999999246,
+          "readReceiptMs": 5.136249999999563,
+          "sendToReceiptMs": 13.842458999999508
+        },
+        {
+          "sendAckMs": 22.705458000000363,
+          "deliveryMs": 21.26483300000109,
+          "readReceiptMs": 6.271875000002183,
+          "sendToReceiptMs": 27.63854100000026
+        },
+        {
+          "sendAckMs": 8.491792000000714,
+          "deliveryMs": 7.754458000003069,
+          "readReceiptMs": 5.032165999997233,
+          "sendToReceiptMs": 12.829333000001498
+        },
+        {
+          "sendAckMs": 22.379124999999476,
+          "deliveryMs": 21.618249999999534,
+          "readReceiptMs": 5.7728339999957825,
+          "sendToReceiptMs": 27.445499999994354
+        },
+        {
+          "sendAckMs": 11.240792000004149,
+          "deliveryMs": 10.230250000000524,
+          "readReceiptMs": 4.662082999995619,
+          "sendToReceiptMs": 14.94958300000144
+        },
+        {
+          "sendAckMs": 20.838292000000365,
+          "deliveryMs": 19.015166999997746,
+          "readReceiptMs": 7.58350000000064,
+          "sendToReceiptMs": 26.66679199999635
+        },
+        {
+          "sendAckMs": 9.536667000000307,
+          "deliveryMs": 8.68699999999808,
+          "readReceiptMs": 4.391791000001831,
+          "sendToReceiptMs": 13.126208000001498
+        },
+        {
+          "sendAckMs": 15.997041000002355,
+          "deliveryMs": 13.959915999999794,
+          "readReceiptMs": 6.0118339999971795,
+          "sendToReceiptMs": 20.077875000002678
+        },
+        {
+          "sendAckMs": 18.525791000000027,
+          "deliveryMs": 17.00262500000099,
+          "readReceiptMs": 5.372875000000931,
+          "sendToReceiptMs": 22.468666000000667
+        },
+        {
+          "sendAckMs": 23.380292000001646,
+          "deliveryMs": 21.82304199999635,
+          "readReceiptMs": 7.094457999999577,
+          "sendToReceiptMs": 29.008874999999534
+        },
+        {
+          "sendAckMs": 22.433040999996592,
+          "deliveryMs": 21.405790999997407,
+          "readReceiptMs": 6.971833999996306,
+          "sendToReceiptMs": 28.45212499999616
+        },
+        {
+          "sendAckMs": 24.77637500000128,
+          "deliveryMs": 22.383457999996608,
+          "readReceiptMs": 7.2129580000037095,
+          "sendToReceiptMs": 29.73370799999975
+        },
+        {
+          "sendAckMs": 24.011958000002778,
+          "deliveryMs": 22.070291999996698,
+          "readReceiptMs": 6.915874999998778,
+          "sendToReceiptMs": 29.096417000000656
+        },
+        {
+          "sendAckMs": 10.04120800000237,
+          "deliveryMs": 8.76629099999991,
+          "readReceiptMs": 4.035667000003741,
+          "sendToReceiptMs": 12.872625000003609
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "metrics": {
+        "sendAckMs": {
+          "p50": 18.315499999996973,
+          "p95": 28.89512499999546,
+          "p99": 132.06870899999922,
+          "max": 132.06870899999922,
+          "p95Under100": true
+        },
+        "deliveryMs": {
+          "p50": 17.07891599999857,
+          "p95": 27.7622080000001,
+          "p99": 128.82270900000003,
+          "max": 128.82270900000003,
+          "p95Under100": true
+        },
+        "readReceiptMs": {
+          "p50": 6.191458000001148,
+          "p95": 15.743291999999201,
+          "p99": 95.57787500000268,
+          "max": 95.57787500000268,
+          "p95Under100": true
+        },
+        "sendToReceiptMs": {
+          "p50": 23.149749999996857,
+          "p95": 41.05629200000112,
+          "p99": 224.47912499999802,
+          "max": 224.47912499999802,
+          "p95Under100": true
+        }
+      },
+      "samples": [
+        {
+          "sendAckMs": 11.971958000001905,
+          "deliveryMs": 10.335458000001381,
+          "readReceiptMs": 5.521500000002561,
+          "sendToReceiptMs": 15.93291699999827
+        },
+        {
+          "sendAckMs": 8.227915999996185,
+          "deliveryMs": 7.753665999996883,
+          "readReceiptMs": 3.384875000003376,
+          "sendToReceiptMs": 11.167583000002196
+        },
+        {
+          "sendAckMs": 15.932709000000614,
+          "deliveryMs": 14.910499999998137,
+          "readReceiptMs": 6.590250000001106,
+          "sendToReceiptMs": 21.57470900000044
+        },
+        {
+          "sendAckMs": 25.710291999996116,
+          "deliveryMs": 24.25724999999511,
+          "readReceiptMs": 6.932666000000609,
+          "sendToReceiptMs": 31.27995799999917
+        },
+        {
+          "sendAckMs": 20.21008399999846,
+          "deliveryMs": 18.719874999995227,
+          "readReceiptMs": 6.230791999994835,
+          "sendToReceiptMs": 25.042541999995592
+        },
+        {
+          "sendAckMs": 8.930875000005472,
+          "deliveryMs": 8.22500000000582,
+          "readReceiptMs": 3.9664170000032755,
+          "sendToReceiptMs": 12.233375000003434
+        },
+        {
+          "sendAckMs": 8.727624999999534,
+          "deliveryMs": 7.808333000000857,
+          "readReceiptMs": 3.5993749999979627,
+          "sendToReceiptMs": 11.458540999999968
+        },
+        {
+          "sendAckMs": 8.002458000002662,
+          "deliveryMs": 6.36699999999837,
+          "readReceiptMs": 2.798917000000074,
+          "sendToReceiptMs": 9.247083000002021
+        },
+        {
+          "sendAckMs": 28.89512499999546,
+          "deliveryMs": 27.7622080000001,
+          "readReceiptMs": 35.12820899999497,
+          "sendToReceiptMs": 62.960291999996116
+        },
+        {
+          "sendAckMs": 9.494416999994428,
+          "deliveryMs": 8.966083999999682,
+          "readReceiptMs": 3.672333999995317,
+          "sendToReceiptMs": 12.67308399999456
+        },
+        {
+          "sendAckMs": 21.365791999996873,
+          "deliveryMs": 19.581416999993962,
+          "readReceiptMs": 6.477374999994936,
+          "sendToReceiptMs": 26.18045799999527
+        },
+        {
+          "sendAckMs": 16.783791000001656,
+          "deliveryMs": 15.909958000003826,
+          "readReceiptMs": 4.34062499999709,
+          "sendToReceiptMs": 20.300916000000143
+        },
+        {
+          "sendAckMs": 24.90879199999472,
+          "deliveryMs": 21.005458999999973,
+          "readReceiptMs": 15.743291999999201,
+          "sendToReceiptMs": 36.80041699999856
+        },
+        {
+          "sendAckMs": 132.06870899999922,
+          "deliveryMs": 128.82270900000003,
+          "readReceiptMs": 95.57787500000268,
+          "sendToReceiptMs": 224.47912499999802
+        },
+        {
+          "sendAckMs": 12.794041999994079,
+          "deliveryMs": 11.59874999999738,
+          "readReceiptMs": 6.654624999995576,
+          "sendToReceiptMs": 18.317041999995126
+        },
+        {
+          "sendAckMs": 33.354041999999026,
+          "deliveryMs": 29.48345800000243,
+          "readReceiptMs": 11.489291999998386,
+          "sendToReceiptMs": 41.05629200000112
+        },
+        {
+          "sendAckMs": 23.837124999998196,
+          "deliveryMs": 22.6987500000032,
+          "readReceiptMs": 5.760624999995343,
+          "sendToReceiptMs": 28.505041999997047
+        },
+        {
+          "sendAckMs": 14.718499999988126,
+          "deliveryMs": 13.972291999991285,
+          "readReceiptMs": 6.191458000001148,
+          "sendToReceiptMs": 20.226207999992766
+        },
+        {
+          "sendAckMs": 19.124708999996074,
+          "deliveryMs": 17.716459000002942,
+          "readReceiptMs": 5.339166000005207,
+          "sendToReceiptMs": 23.149749999996857
+        },
+        {
+          "sendAckMs": 14.997292000000016,
+          "deliveryMs": 14.041167000003043,
+          "readReceiptMs": 6.719000000011874,
+          "sendToReceiptMs": 20.828209000013885
+        },
+        {
+          "sendAckMs": 7.8150840000016615,
+          "deliveryMs": 6.964084000006551,
+          "readReceiptMs": 3.1303749999933643,
+          "sendToReceiptMs": 10.16112499999872
+        },
+        {
+          "sendAckMs": 21.892042000006768,
+          "deliveryMs": 19.282749999998487,
+          "readReceiptMs": 7.251582999990205,
+          "sendToReceiptMs": 26.668541999999434
+        },
+        {
+          "sendAckMs": 7.071541999990586,
+          "deliveryMs": 6.061207999999169,
+          "readReceiptMs": 2.855541999990237,
+          "sendToReceiptMs": 8.972249999991618
+        },
+        {
+          "sendAckMs": 18.16929099999834,
+          "deliveryMs": 17.07891599999857,
+          "readReceiptMs": 5.091250000012224,
+          "sendToReceiptMs": 22.23804100000416
+        },
+        {
+          "sendAckMs": 13.994707999998354,
+          "deliveryMs": 13.149416000000201,
+          "readReceiptMs": 5.3619590000016615,
+          "sendToReceiptMs": 18.57562499999767
+        },
+        {
+          "sendAckMs": 26.182041000007303,
+          "deliveryMs": 24.4273749999993,
+          "readReceiptMs": 7.41095900000073,
+          "sendToReceiptMs": 31.96637500000361
+        },
+        {
+          "sendAckMs": 24.345333000004757,
+          "deliveryMs": 22.511958000002778,
+          "readReceiptMs": 7.378042000011192,
+          "sendToReceiptMs": 29.968625000008615
+        },
+        {
+          "sendAckMs": 22.711250000007567,
+          "deliveryMs": 20.855041999995592,
+          "readReceiptMs": 6.930333999989671,
+          "sendToReceiptMs": 27.896208999998635
+        },
+        {
+          "sendAckMs": 24.520375000007334,
+          "deliveryMs": 23.004291999997804,
+          "readReceiptMs": 7.72720800001116,
+          "sendToReceiptMs": 30.827000000004773
+        },
+        {
+          "sendAckMs": 18.315499999996973,
+          "deliveryMs": 16.98070899999584,
+          "readReceiptMs": 7.3680420000018785,
+          "sendToReceiptMs": 24.475542000000132
+        },
+        {
+          "sendAckMs": 22.864500000010594,
+          "deliveryMs": 20.83466700000281,
+          "readReceiptMs": 7.079916999995476,
+          "sendToReceiptMs": 28.015041999999085
+        },
+        {
+          "sendAckMs": 24.201416000010795,
+          "deliveryMs": 22.715958000000683,
+          "readReceiptMs": 6.170874999996158,
+          "sendToReceiptMs": 28.976708000001963
+        },
+        {
+          "sendAckMs": 23.971249999987776,
+          "deliveryMs": 21.72591699998884,
+          "readReceiptMs": 7.132125000003725,
+          "sendToReceiptMs": 28.99474999999802
+        },
+        {
+          "sendAckMs": 21.757500000006985,
+          "deliveryMs": 20.64054200000828,
+          "readReceiptMs": 7.678333999996539,
+          "sendToReceiptMs": 28.450708999997005
+        },
+        {
+          "sendAckMs": 24.694541000004392,
+          "deliveryMs": 23.26333300000988,
+          "readReceiptMs": 6.104000000006636,
+          "sendToReceiptMs": 29.435541000013473
+        },
+        {
+          "sendAckMs": 25.655624999999418,
+          "deliveryMs": 23.952166999995825,
+          "readReceiptMs": 7.2436670000024606,
+          "sendToReceiptMs": 31.281291999999667
+        },
+        {
+          "sendAckMs": 6.724916000006488,
+          "deliveryMs": 6.221707999997307,
+          "readReceiptMs": 4.713334000000032,
+          "sendToReceiptMs": 10.968500000002678
+        },
+        {
+          "sendAckMs": 10.034459000002244,
+          "deliveryMs": 8.826958999998169,
+          "readReceiptMs": 3.827333000008366,
+          "sendToReceiptMs": 12.713125000009313
+        },
+        {
+          "sendAckMs": 14.615374999993946,
+          "deliveryMs": 13.255917000002228,
+          "readReceiptMs": 5.253624999997555,
+          "sendToReceiptMs": 18.604916999989655
+        },
+        {
+          "sendAckMs": 5.5509170000004815,
+          "deliveryMs": 4.864916999998968,
+          "readReceiptMs": 2.631875000006403,
+          "sendToReceiptMs": 7.536917000004905
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "metrics": {
+        "sendAckMs": {
+          "p50": 19.934166999999434,
+          "p95": 26.883290999991004,
+          "p99": 52.55641600000672,
+          "max": 52.55641600000672,
+          "p95Under100": true
+        },
+        "deliveryMs": {
+          "p50": 18.959417000005487,
+          "p95": 26.10483299999032,
+          "p99": 51.96870800000033,
+          "max": 51.96870800000033,
+          "p95Under100": true
+        },
+        "readReceiptMs": {
+          "p50": 5.751541999998153,
+          "p95": 8.570000000006985,
+          "p99": 9.040915999998106,
+          "max": 9.040915999998106,
+          "p95Under100": true
+        },
+        "sendToReceiptMs": {
+          "p50": 25.83095799999137,
+          "p95": 33.52966600000218,
+          "p99": 56.12058299999626,
+          "max": 56.12058299999626,
+          "p95Under100": true
+        }
+      },
+      "samples": [
+        {
+          "sendAckMs": 22.15245799999684,
+          "deliveryMs": 20.523499999995693,
+          "readReceiptMs": 8.181500000006054,
+          "sendToReceiptMs": 28.802292000007583
+        },
+        {
+          "sendAckMs": 19.57429200000479,
+          "deliveryMs": 18.959417000005487,
+          "readReceiptMs": 7.937999999994645,
+          "sendToReceiptMs": 26.928083999999217
+        },
+        {
+          "sendAckMs": 26.883290999991004,
+          "deliveryMs": 26.10483299999032,
+          "readReceiptMs": 7.438041000001249,
+          "sendToReceiptMs": 33.59466599998996
+        },
+        {
+          "sendAckMs": 22.295708000005106,
+          "deliveryMs": 20.37187499999709,
+          "readReceiptMs": 8.150792000000365,
+          "sendToReceiptMs": 28.62233300000662
+        },
+        {
+          "sendAckMs": 25.104791000005207,
+          "deliveryMs": 23.47479100000055,
+          "readReceiptMs": 9.040915999998106,
+          "sendToReceiptMs": 32.614541000002646
+        },
+        {
+          "sendAckMs": 6.837791999991168,
+          "deliveryMs": 6.1137089999974705,
+          "readReceiptMs": 3.0281659999891417,
+          "sendToReceiptMs": 9.185749999989639
+        },
+        {
+          "sendAckMs": 18.8125,
+          "deliveryMs": 16.85312499999418,
+          "readReceiptMs": 5.699042000007466,
+          "sendToReceiptMs": 22.6543340000062
+        },
+        {
+          "sendAckMs": 13.863790999996127,
+          "deliveryMs": 12.450916000001598,
+          "readReceiptMs": 4.933541000005789,
+          "sendToReceiptMs": 17.46929100000125
+        },
+        {
+          "sendAckMs": 21.172500000000582,
+          "deliveryMs": 19.66333300000406,
+          "readReceiptMs": 6.434041999993497,
+          "sendToReceiptMs": 26.185792000003858
+        },
+        {
+          "sendAckMs": 25.67979199999536,
+          "deliveryMs": 24.67583300000115,
+          "readReceiptMs": 8.570000000006985,
+          "sendToReceiptMs": 33.276167000003625
+        },
+        {
+          "sendAckMs": 22.186791999993147,
+          "deliveryMs": 21.296749999994063,
+          "readReceiptMs": 7.579540999999153,
+          "sendToReceiptMs": 28.93962499999907
+        },
+        {
+          "sendAckMs": 15.52049999999872,
+          "deliveryMs": 14.969666999997571,
+          "readReceiptMs": 4.723458000007668,
+          "sendToReceiptMs": 19.72437500000524
+        },
+        {
+          "sendAckMs": 25.61066700000083,
+          "deliveryMs": 23.638374999994994,
+          "readReceiptMs": 5.630000000004657,
+          "sendToReceiptMs": 29.351332999998704
+        },
+        {
+          "sendAckMs": 22.55083300000115,
+          "deliveryMs": 21.73337499999616,
+          "readReceiptMs": 7.517040999999153,
+          "sendToReceiptMs": 29.30520799999067
+        },
+        {
+          "sendAckMs": 52.55641600000672,
+          "deliveryMs": 51.96870800000033,
+          "readReceiptMs": 4.118707999994513,
+          "sendToReceiptMs": 56.12058299999626
+        },
+        {
+          "sendAckMs": 16.226542000003974,
+          "deliveryMs": 15.237208999998984,
+          "readReceiptMs": 6.193665999991936,
+          "sendToReceiptMs": 21.48200000000361
+        },
+        {
+          "sendAckMs": 12.900750000000698,
+          "deliveryMs": 12.162249999993946,
+          "readReceiptMs": 5.751541999998153,
+          "sendToReceiptMs": 17.986707999996725
+        },
+        {
+          "sendAckMs": 23.87225000000035,
+          "deliveryMs": 22.34029200000805,
+          "readReceiptMs": 6.233666000000085,
+          "sendToReceiptMs": 28.680458000002545
+        },
+        {
+          "sendAckMs": 9.272041999996873,
+          "deliveryMs": 7.975957999995444,
+          "readReceiptMs": 4.078499999988708,
+          "sendToReceiptMs": 12.111957999994047
+        },
+        {
+          "sendAckMs": 7.996790999997756,
+          "deliveryMs": 6.858290999996825,
+          "readReceiptMs": 3.228625000003376,
+          "sendToReceiptMs": 10.140458000008948
+        },
+        {
+          "sendAckMs": 13.885582999995677,
+          "deliveryMs": 12.441250000003492,
+          "readReceiptMs": 4.551875000004657,
+          "sendToReceiptMs": 17.064125000004424
+        },
+        {
+          "sendAckMs": 24.14458399999421,
+          "deliveryMs": 22.786333999989438,
+          "readReceiptMs": 4.896042000007583,
+          "sendToReceiptMs": 27.74358399999619
+        },
+        {
+          "sendAckMs": 23.10641599999508,
+          "deliveryMs": 21.523541000002297,
+          "readReceiptMs": 7.120999999999185,
+          "sendToReceiptMs": 28.725332999994862
+        },
+        {
+          "sendAckMs": 19.330375000005006,
+          "deliveryMs": 17.901874999995925,
+          "readReceiptMs": 5.583832999996957,
+          "sendToReceiptMs": 23.568167000004905
+        },
+        {
+          "sendAckMs": 14.403374999994412,
+          "deliveryMs": 13.344624999997905,
+          "readReceiptMs": 5.881667000008747,
+          "sendToReceiptMs": 19.28545799999847
+        },
+        {
+          "sendAckMs": 20.240458000000217,
+          "deliveryMs": 19.083208000010927,
+          "readReceiptMs": 8.643500000005588,
+          "sendToReceiptMs": 27.792792000007466
+        },
+        {
+          "sendAckMs": 24.180540999994264,
+          "deliveryMs": 22.612415999989025,
+          "readReceiptMs": 6.881500000003143,
+          "sendToReceiptMs": 29.569499999997788
+        },
+        {
+          "sendAckMs": 18.436415999996825,
+          "deliveryMs": 17.81329099999857,
+          "readReceiptMs": 6.113708000004408,
+          "sendToReceiptMs": 23.962916000004043
+        },
+        {
+          "sendAckMs": 19.962583999993512,
+          "deliveryMs": 18.73429199999373,
+          "readReceiptMs": 7.640499999994063,
+          "sendToReceiptMs": 26.44358399999328
+        },
+        {
+          "sendAckMs": 29.267957999996725,
+          "deliveryMs": 27.70658299999195,
+          "readReceiptMs": 5.739666000008583,
+          "sendToReceiptMs": 33.52966600000218
+        },
+        {
+          "sendAckMs": 26.697000000000116,
+          "deliveryMs": 24.551415999987512,
+          "readReceiptMs": 7.821125000002212,
+          "sendToReceiptMs": 32.46083299999009
+        },
+        {
+          "sendAckMs": 19.934166999999434,
+          "deliveryMs": 19.477542000007816,
+          "readReceiptMs": 3.326042000000598,
+          "sendToReceiptMs": 22.82779200001096
+        },
+        {
+          "sendAckMs": 20.122915999992983,
+          "deliveryMs": 19.465125000002445,
+          "readReceiptMs": 6.326166999991983,
+          "sendToReceiptMs": 25.83095799999137
+        },
+        {
+          "sendAckMs": 26.069791999994777,
+          "deliveryMs": 24.43879200000083,
+          "readReceiptMs": 6.136375000001863,
+          "sendToReceiptMs": 30.665208999998868
+        },
+        {
+          "sendAckMs": 13.687625000005937,
+          "deliveryMs": 12.575042000011308,
+          "readReceiptMs": 5.382874999995693,
+          "sendToReceiptMs": 18.03370800000266
+        },
+        {
+          "sendAckMs": 12.007916000002297,
+          "deliveryMs": 10.56616600000416,
+          "readReceiptMs": 5.631249999976717,
+          "sendToReceiptMs": 16.276290999987395
+        },
+        {
+          "sendAckMs": 6.5826669999805745,
+          "deliveryMs": 6.228957999992417,
+          "readReceiptMs": 2.674291000002995,
+          "sendToReceiptMs": 8.925957999977982
+        },
+        {
+          "sendAckMs": 8.497249999985797,
+          "deliveryMs": 7.83841699999175,
+          "readReceiptMs": 3.8094160000036936,
+          "sendToReceiptMs": 11.690999999991618
+        },
+        {
+          "sendAckMs": 8.348999999987427,
+          "deliveryMs": 7.867957999987993,
+          "readReceiptMs": 3.5708750000048894,
+          "sendToReceiptMs": 11.47104199999012
+        },
+        {
+          "sendAckMs": 11.046666999987792,
+          "deliveryMs": 9.616374999983236,
+          "readReceiptMs": 4.6480000000156,
+          "sendToReceiptMs": 14.33537499999511
+        }
+      ]
+    }
+  ],
+  "apiRevision": "0ef3bfc55e847f1cd10e5406ccf882e583561b37",
+  "services": {
+    "node": "22.23.5",
+    "mongo": "8.0.38",
+    "redis": "8.4.8",
+    "moderation": "disabled",
+    "repeatRule": "disabled"
+  }
+}

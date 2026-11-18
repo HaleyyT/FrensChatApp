@@ -8,7 +8,7 @@
     "smoke": "node scripts/release-smoke.mjs",
     "audit:prod": "npm audit --omit=dev",
     "check:backend": "node scripts/check-backend.mjs",
-    "test:backend": "node --test --test-concurrency=1 tests/backend.integration.test.js tests/message-quota-config.test.js",
+    "test:backend": "node --test --test-concurrency=1 tests/backend.integration.test.js tests/message-quota-config.test.js tests/container-coverage.test.js",
     "test:socket": "node --test --test-concurrency=1 tests/socket.realtime.test.js",
     "test:quota": "node scripts/day1-message-quota.mjs",
     "test:moderation": "node scripts/day3-moderation.mjs",
